@@ -12,64 +12,60 @@ sequenceDiagram
     C->>S: HTTP Request (Plain Text)
     S->>C: HTTP Response (Plain Text)
     Note over C,S: Connection Closed
-    Note over C,S: Data visible to hackers ⚠️
+    Note over C,S: Data visible to attackers
 ```
 
-## HTTPS / SSL Handshake Flow
+## HTTPS / TLS Handshake Flow
 
 ```mermaid
 sequenceDiagram
     participant C as Client
     participant S as Server
     C->>S: TCP Connection Established
-    S->>C: Public Key / Certificate
+    C->>S: ClientHello (supported TLS versions, cipher suites)
+    S->>C: ServerHello + Certificate (contains Public Key)
+    Note over C: Verify certificate against trusted CAs
     Note over C: Generate Session Key
-    C->>S: Session Key encrypted with Public Key<br/>(Asymmetric Encryption)
+    C->>S: Session Key encrypted with Public Key (Asymmetric)
     Note over S: Decrypt with Private Key
     Note over C,S: Both have Session Key
-    C->>S: Data encrypted with Session Key<br/>(Symmetric Encryption)
-    S->>C: Data encrypted with Session Key<br/>(Symmetric Encryption)
-    Note over C,S: Hacker cannot read data 🔒
+    C->>S: Data encrypted with Session Key (Symmetric)
+    S->>C: Data encrypted with Session Key (Symmetric)
 ```
 
 ---
 
 ## Basics
 
-- **URL**: Web address. DNS converts the URL hostname to an IP address.
-- **HTTP**: Foundation of web communication. Methods: `GET`, `POST`, `PUT`, `DELETE`, `HEAD`, `PATCH`.
-- **SSL**: Encryption protocol for secure communication.
-- **Network Protocol**: Rules for formatting, sending, and receiving data.
-- **TCP**: Reliable, connection-oriented, ordered delivery.
-- **UDP**: Connectionless, lightweight, faster, no delivery guarantee.
-- **Socket**: Software endpoint for bidirectional client-server communication.
-- **InputStream**: Reads bytes from the server.
-- **BufferedReader**: Reads text efficiently by buffering chunks.
-- **SSL/TLS Handshake**: Creates an encrypted channel, includes certificate verification.
-- **Multipart Request**: A POST request with more than one content-type in the body.
+| Term | Description |
+|------|-------------|
+| **URL** | Web address. DNS resolves the hostname to an IP address. |
+| **HTTP** | Stateless request-response protocol. Methods: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`. |
+| **TLS/SSL** | Encryption protocol for secure communication. TLS is the modern successor to SSL. |
+| **TCP** | Reliable, connection-oriented, ordered delivery. Used by HTTP/HTTPS. |
+| **UDP** | Connectionless, no delivery guarantee. Used by DNS, video streaming, gaming. |
+| **Socket** | Software endpoint for bidirectional communication. A TCP connection = pair of sockets. |
+| **Multipart Request** | HTTP request with multiple content-types in the body (e.g., form fields + file upload). |
 
 ---
 
 ## HttpURLConnection
 
-Part of the Android SDK. `HttpEngine` handles high-level HTTP logic (caching, redirects, auth).
+Part of the Android SDK. Handles HTTP operations including caching, redirects, and authentication.
 
 !!! note "OkHttp Under the Hood"
-    After Android 4.4, `HttpURLConnection` uses OkHttp internally.
+    Since Android 4.4, `HttpURLConnection` uses OkHttp internally. There is no reason to use `HttpURLConnection` directly in modern code.
 
 ```kotlin
 val url = URL("https://api.example.com/data")
 val connection = url.openConnection() as HttpURLConnection
 try {
     connection.requestMethod = "GET"
-    connection.connectTimeout = 15000
-    connection.readTimeout = 15000
+    connection.connectTimeout = 15_000
+    connection.readTimeout = 15_000
 
-    val responseCode = connection.responseCode
-    if (responseCode == HttpURLConnection.HTTP_OK) {
-        val reader = BufferedReader(InputStreamReader(connection.inputStream))
-        val response = reader.readText()
-        reader.close()
+    if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+        val response = connection.inputStream.bufferedReader().readText()
     }
 } finally {
     connection.disconnect()
@@ -82,23 +78,23 @@ try {
 
 === "HTTP Request"
 
-    Standard request-response: handshake → connection → response → close.
+    Standard request-response. Client initiates, server responds, connection closes.
 
 === "HTTP Polling"
 
-    Client sends requests at regular intervals to check for updates.
+    Client sends requests at regular intervals to check for updates. Simple but wasteful — most responses are empty.
 
 === "HTTP Long Polling"
 
-    Client sends a request and waits — the connection stays open until the server has data or a timeout occurs.
+    Client sends a request and the server **holds it open** until data is available or a timeout occurs. Reduces empty responses but still creates new connections repeatedly.
 
 === "WebSocket"
 
-    Persistent, bidirectional communication over a single TCP connection. Only requires one handshake.
+    Persistent, **bidirectional** communication over a single TCP connection. Only one handshake. Both client and server can push data at any time. Used for chat, live updates, real-time collaboration.
 
 === "SSE (Server-Sent Events)"
 
-    Unidirectional persistent connection — server pushes events to the client (e.g., stock price updates).
+    **Unidirectional** persistent connection — server pushes events to the client over a standard HTTP connection. Simpler than WebSocket when you only need server-to-client updates (stock prices, notifications).
 
 ---
 
@@ -113,7 +109,7 @@ val request = Request.Builder()
     .url("https://api.example.com/data")
     .build()
 
-// Synchronous - blocks the thread
+// Blocks the calling thread
 val response = client.newCall(request).execute()
 val body = response.body?.string()
 ```
@@ -127,12 +123,11 @@ val request = Request.Builder()
     .url("https://api.example.com/data")
     .build()
 
-// Asynchronous - callback on background thread
+// Callback on OkHttp's background thread pool
 client.newCall(request).enqueue(object : Callback {
     override fun onFailure(call: Call, e: IOException) {
         // handle failure
     }
-
     override fun onResponse(call: Call, response: Response) {
         val body = response.body?.string()
     }
@@ -140,14 +135,34 @@ client.newCall(request).enqueue(object : Callback {
 ```
 
 !!! note "Default Dispatcher"
-    OkHttp uses `ThreadPoolExecutor` as the default dispatcher. A custom dispatcher can be provided via `OkHttpClient.Builder().dispatcher(customDispatcher)`.
+    OkHttp uses a `ThreadPoolExecutor` as its default dispatcher (max 64 concurrent requests, 5 per host). Customize via `OkHttpClient.Builder().dispatcher(...)`.
 
 ---
 
 ## OkHttp Interceptors
 
-- **Application Interceptor**: Sits between the client code and OkHttp core library. Added via `.addInterceptor()`.
-- **Network Interceptor**: Sits between OkHttp core library and the server. Added via `.addNetworkInterceptor()`.
+Interceptors are a powerful mechanism to observe, modify, and short-circuit requests and responses. They form a **chain** where each interceptor processes the request and passes it to the next.
+
+### Interceptor Chain (Internal)
+
+```mermaid
+flowchart TD
+    A["Application Interceptors\n(.addInterceptor)"] --> B["RetryAndFollowUpInterceptor\n(retries, redirects)"]
+    B --> C["BridgeInterceptor\n(adds headers: Content-Type,\nAccept-Encoding, Cookie)"]
+    C --> D["CacheInterceptor\n(serves from cache if valid)"]
+    D --> E["ConnectInterceptor\n(opens TCP + TLS connection)"]
+    E --> F["Network Interceptors\n(.addNetworkInterceptor)"]
+    F --> G["CallServerInterceptor\n(writes request, reads response)"]
+```
+
+### Application vs Network Interceptor
+
+| | Application Interceptor | Network Interceptor |
+|---|---|---|
+| Added via | `.addInterceptor()` | `.addNetworkInterceptor()` |
+| Called | Once per call | Once per network request (not called on cached responses) |
+| Sees | Original request | Request after redirects, with OkHttp-added headers |
+| Use case | Logging, auth tokens, analytics | Low-level network inspection, response modification |
 
 ### Caching Interceptor
 
@@ -185,102 +200,295 @@ val client = OkHttpClient.Builder()
     .build()
 ```
 
-### Gzip Compression Interceptor
+### Authenticator (Token Refresh)
+
+OkHttp's built-in mechanism for handling **401 Unauthorized** responses. Better than doing token refresh in an interceptor because OkHttp manages the retry loop (up to 20 retries by default) and avoids infinite loops.
 
 ```kotlin
-class GzipInterceptor : Interceptor {
-    override fun intercept(chain: Interceptor.Chain): Response {
-        val request = chain.request().newBuilder()
-            .addHeader("Accept-Encoding", "gzip")
-            .build()
-        return chain.proceed(request)
+class TokenAuthenticator(
+    private val tokenManager: TokenManager
+) : Authenticator {
+
+    override fun authenticate(route: Route?, response: Response): Request? {
+        // Avoid infinite retry if refresh also returns 401
+        if (response.request.header("Authorization") != null
+            && response.priorResponse != null) {
+            return null // give up — already retried
+        }
+
+        val newToken = synchronized(this) {
+            // Refresh the token (thread-safe)
+            tokenManager.refreshToken()
+        }
+
+        return if (newToken != null) {
+            response.request.newBuilder()
+                .header("Authorization", "Bearer $newToken")
+                .build()
+        } else {
+            null // give up — refresh failed
+        }
     }
 }
+
+val client = OkHttpClient.Builder()
+    .authenticator(TokenAuthenticator(tokenManager))
+    .addInterceptor(AuthTokenInterceptor { tokenManager.accessToken })
+    .build()
 ```
+
+!!! tip "Interceptor vs Authenticator"
+    - **Interceptor** — adds the token to every request proactively
+    - **Authenticator** — only called when a 401 is received; refreshes the token and retries the request
+    - Use both together: interceptor attaches the current token, authenticator handles expiration.
 
 ---
 
 ## Retrofit
 
-- Uses OkHttp under the hood.
-- Supports coroutines (`suspend` functions in service interfaces).
-- Less boilerplate than raw OkHttp.
-- Parses JSON responses directly to data classes via converters (Gson, Moshi).
+Type-safe HTTP client built on OkHttp. Turns an interface into HTTP calls with annotations.
+
+### Service Interface
 
 ```kotlin
 interface ApiService {
     @GET("users/{id}")
     suspend fun getUser(@Path("id") userId: String): User
-}
 
+    @GET("users")
+    suspend fun searchUsers(
+        @Query("name") name: String,
+        @Query("page") page: Int
+    ): List<User>
+
+    @POST("users")
+    suspend fun createUser(@Body user: CreateUserRequest): User
+
+    @PUT("users/{id}")
+    suspend fun updateUser(
+        @Path("id") userId: String,
+        @Body user: UpdateUserRequest,
+        @Header("If-Match") etag: String
+    ): User
+
+    @Multipart
+    @POST("users/{id}/avatar")
+    suspend fun uploadAvatar(
+        @Path("id") userId: String,
+        @Part image: MultipartBody.Part
+    ): AvatarResponse
+
+    @DELETE("users/{id}")
+    suspend fun deleteUser(@Path("id") userId: String): Response<Unit>
+}
+```
+
+### Common Annotations
+
+| Annotation | Purpose |
+|---|---|
+| `@GET`, `@POST`, `@PUT`, `@DELETE`, `@PATCH` | HTTP method + relative URL |
+| `@Path("param")` | Replaces `{param}` in the URL |
+| `@Query("key")` | Appends `?key=value` to the URL |
+| `@QueryMap` | Appends a `Map<String, String>` as query parameters |
+| `@Body` | Serializes the object as the request body (JSON, protobuf, etc.) |
+| `@Header("name")` | Adds a single header to the request |
+| `@HeaderMap` | Adds multiple headers from a map |
+| `@Multipart` + `@Part` | Multipart form data (file uploads) |
+| `@FormUrlEncoded` + `@Field` | URL-encoded form data |
+
+### Setup
+
+```kotlin
 val retrofit = Retrofit.Builder()
     .baseUrl("https://api.example.com/")
     .client(okHttpClient)
-    .addConverterFactory(MoshiConverterFactory.create())
+    .addConverterFactory(MoshiConverterFactory.create(moshi))
     .build()
 
 val service = retrofit.create(ApiService::class.java)
 ```
 
+!!! tip "Return Types"
+    - `suspend fun getUser(): User` — returns the deserialized body directly (throws on error)
+    - `suspend fun getUser(): Response<User>` — returns the full Response wrapper (access code, headers, error body)
+    - `fun getUser(): Call<User>` — non-coroutine, use `.enqueue()` or `.execute()`
+
 ---
 
 ## Connection Pooling
 
-- Reuses existing connections, skipping the handshake for subsequent requests.
-- For **many requests to the same base URL**: use the same `OkHttpClient` instance to take advantage of pooling.
-- For **different base URLs with balanced load**: use different `OkHttpClient` instances.
+OkHttp maintains a connection pool to reuse existing TCP+TLS connections, avoiding the overhead of repeated handshakes.
+
+**Default pool settings:** 5 idle connections, 5-minute keep-alive.
+
+```kotlin
+val client = OkHttpClient.Builder()
+    .connectionPool(ConnectionPool(
+        maxIdleConnections = 10,
+        keepAliveDuration = 5,
+        timeUnit = TimeUnit.MINUTES
+    ))
+    .build()
+```
+
+**Best practices:**
+
+- **Same base URL:** Use a **single** `OkHttpClient` instance — all requests share the connection pool
+- **Different base URLs:** Still share one `OkHttpClient` unless you need separate pool configurations
+- **Singleton pattern:** Create `OkHttpClient` once in your DI module; creating multiple clients wastes memory and connections
 
 ---
 
 ## File Download
 
-- Standard HTTP request with buffered reading (typically **4 KB** buffer size).
-- Read in a loop until the stream is exhausted.
-- **Range Header**: Request specific byte ranges for partial downloads or resuming.
-- **Content-Length**: Used to calculate download progress.
-- Configure **read timeout**, **write timeout**, and **connect timeout** appropriately.
-
 ```kotlin
 val request = Request.Builder()
     .url("https://example.com/file.zip")
-    .addHeader("Range", "bytes=0-1023") // first 1KB
+    .addHeader("Range", "bytes=0-1023") // partial download (first 1KB)
     .build()
 
 val response = client.newCall(request).execute()
-val inputStream = response.body?.byteStream()
-val buffer = ByteArray(4096) // 4KB buffer
-var bytesRead: Int
+val contentLength = response.body?.contentLength() ?: -1L
+var totalBytesRead = 0L
 
-FileOutputStream(outputFile).use { output ->
-    while (inputStream?.read(buffer).also { bytesRead = it ?: -1 } != -1) {
-        output.write(buffer, 0, bytesRead)
+response.body?.byteStream()?.use { input ->
+    FileOutputStream(outputFile).use { output ->
+        val buffer = ByteArray(8192) // 8KB buffer
+        var bytesRead: Int
+        while (input.read(buffer).also { bytesRead = it } != -1) {
+            output.write(buffer, 0, bytesRead)
+            totalBytesRead += bytesRead
+            val progress = if (contentLength > 0) totalBytesRead * 100 / contentLength else -1
+            onProgress(progress)
+        }
     }
 }
 ```
+
+- **Range Header** — request specific byte ranges for resumable downloads
+- **Content-Length** — used to calculate download progress
+- Configure **connectTimeout**, **readTimeout**, and **writeTimeout** appropriately
+
+---
+
+## gRPC
+
+Binary protocol using **Protocol Buffers** for serialization. More efficient than REST for mobile apps.
+
+### Key Characteristics
+
+| Feature | REST/JSON | gRPC/Protobuf |
+|---|---|---|
+| Format | Text (JSON) | Binary (protobuf) |
+| Schema | Optional (OpenAPI) | Required (.proto files) |
+| Streaming | Limited (SSE, WebSocket) | Built-in bidirectional streaming |
+| Code generation | Optional | Required (generates client/server stubs) |
+| Payload size | Larger | 3-10x smaller |
+| HTTP version | HTTP/1.1 or HTTP/2 | HTTP/2 required |
+
+### Proto Definition
+
+```protobuf
+syntax = "proto3";
+
+service UserService {
+    rpc GetUser (GetUserRequest) returns (User);
+    rpc ListUsers (ListUsersRequest) returns (stream User); // server streaming
+}
+
+message GetUserRequest {
+    string id = 1;
+}
+
+message User {
+    string id = 1;
+    string name = 2;
+    string email = 3;
+}
+```
+
+### Android Usage
+
+```kotlin
+// Generated stub from .proto file
+val channel = ManagedChannelBuilder
+    .forAddress("api.example.com", 443)
+    .useTransportSecurity()
+    .build()
+
+val stub = UserServiceGrpcKt.UserServiceCoroutineStub(channel)
+
+// Unary call
+val user = stub.getUser(GetUserRequest.newBuilder().setId("123").build())
+
+// Server streaming
+stub.listUsers(request).collect { user ->
+    println(user.name)
+}
+```
+
+!!! tip "When to Use gRPC"
+    - High-frequency calls between services (microservices)
+    - Bandwidth-constrained mobile apps
+    - When you need bidirectional streaming
+    - Large apps like Google, Netflix, and Square use gRPC for mobile APIs
+
+---
+
+## GraphQL
+
+Single endpoint, client specifies exactly which fields it needs. Reduces over-fetching and under-fetching.
+
+```graphql
+# Client requests only the fields it needs
+query {
+    user(id: "123") {
+        name
+        email
+        posts(limit: 5) {
+            title
+            createdAt
+        }
+    }
+}
+```
+
+| Aspect | REST | GraphQL |
+|---|---|---|
+| Endpoints | Multiple (`/users`, `/posts`) | Single (`/graphql`) |
+| Over-fetching | Common (server decides response shape) | None (client specifies fields) |
+| Versioning | URL-based (`/v1/`, `/v2/`) | Schema evolution (deprecate fields) |
+| Caching | HTTP caching (easy) | More complex (needs client-side cache like Apollo) |
+
+**Android libraries:** Apollo GraphQL (Kotlin-first, coroutine support, normalized caching).
 
 ---
 
 ## OAuth 2.0
 
-!!! warning "Earlier Approach"
-    Credentials were sent in every request — insecure and inefficient.
+!!! warning "Pre-OAuth"
+    Credentials sent in every request — insecure and inefficient.
 
-**OAuth 2.0** uses access tokens (JWT) instead:
+**OAuth 2.0** uses token-based authorization:
 
-- **Authentication** = Send credentials, receive tokens.
-- **Authorization** = Send access token with requests.
-- **Access Token**: Short-lived. Used for API authorization.
-- **Refresh Token**: Long-lived. Used to generate new access tokens when the current one expires.
+- **Authentication** = send credentials, receive tokens
+- **Authorization** = send access token with API requests
+- **Access Token** = short-lived (minutes to hours), used for API authorization
+- **Refresh Token** = long-lived (days to months), used to obtain new access tokens silently
 
 ### JWT (JSON Web Token)
 
-Three parts separated by dots:
+Three Base64-encoded parts separated by dots: `header.payload.signature`
 
 | Part | Content |
 |---|---|
-| **Header** | Algorithm and token type |
-| **Payload** | Claims (user data, expiry) |
-| **Signature** | Verification hash |
+| **Header** | Algorithm (`HS256`, `RS256`) and token type |
+| **Payload** | Claims — user ID, roles, expiry (`exp`), issued at (`iat`) |
+| **Signature** | `HMAC(header + payload, secret)` — verifies integrity |
+
+!!! warning "JWTs are NOT encrypted"
+    The payload is Base64-encoded, not encrypted. Anyone can decode it. Never put sensitive data (passwords, credit cards) in a JWT. The signature only proves the token has not been tampered with.
 
 ---
 
@@ -290,26 +498,168 @@ Three parts separated by dots:
 |---|---|---|
 | **1xx** | Informational | 100 Continue |
 | **2xx** | Success | 200 OK, 201 Created, 204 No Content, 206 Partial Content |
-| **3xx** | Redirection | 301 Moved Permanently, 302 Found |
-| **4xx** | Client Error | 400 Bad Request, 401 Unauthorized, 404 Not Found |
-| **5xx** | Server Error | 500 Internal Server Error |
+| **3xx** | Redirection | 301 Moved Permanently, 302 Found, 304 Not Modified |
+| **4xx** | Client Error | 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 429 Too Many Requests |
+| **5xx** | Server Error | 500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout |
 
 ---
 
-## HTTP vs HTTPS and SSL Pinning
+## HTTPS and SSL Pinning
 
-- **HTTP**: No encryption. A hacker can intercept and read data in transit.
-- **Asymmetric Encryption**: Uses a public + private key pair. Secure but slow due to high processing overhead.
-- **Symmetric Encryption**: Uses a single session key. Not as secure but much faster.
+- **HTTP** — no encryption, data visible to anyone on the network
+- **Asymmetric encryption** — public + private key pair, secure but slow (used for key exchange only)
+- **Symmetric encryption** — single shared session key, fast (used for actual data transfer)
 
-!!! tip "HTTPS Handshake"
+!!! tip "TLS Handshake Summary"
     1. Server sends certificate containing its **public key**
-    2. Client generates a **session key**
-    3. Client encrypts session key with the server's public key (asymmetric)
+    2. Client verifies certificate against trusted CA store
+    3. Client generates a **session key**, encrypts it with the server's public key (asymmetric)
     4. Server decrypts with its **private key**
-    5. Both now have the session key
+    5. Both sides now share the session key
     6. All subsequent data uses **symmetric encryption** with the session key
 
 ### SSL Pinning
 
-The client **pins** the server's certificate (or public key hash). Any response with an unknown or mismatched certificate is rejected — prevents man-in-the-middle attacks even if a rogue CA issues a fraudulent certificate.
+The client **pins** the server's certificate or public key hash. Rejects any certificate not matching the pin — prevents man-in-the-middle attacks even with a compromised CA.
+
+```kotlin
+val client = OkHttpClient.Builder()
+    .certificatePinner(
+        CertificatePinner.Builder()
+            .add("api.example.com", "sha256/AAAA...=")
+            .add("api.example.com", "sha256/BBBB...=") // backup pin
+            .build()
+    )
+    .build()
+```
+
+!!! warning "Pin Rotation"
+    Always pin **at least two keys** (current + backup). If you only pin one and the certificate rotates, every deployed app will fail to connect until users update. This has caused production outages at major companies.
+
+### Network Security Config
+
+Declarative XML configuration for network security policies. Placed in `res/xml/network_security_config.xml` and referenced in the manifest.
+
+```xml
+<!-- res/xml/network_security_config.xml -->
+<network-security-config>
+
+    <!-- Block cleartext (HTTP) traffic globally -->
+    <base-config cleartextTrafficPermitted="false" />
+
+    <!-- Allow cleartext for local development -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+    </domain-config>
+
+    <!-- Certificate pinning (declarative alternative to OkHttp pinning) -->
+    <domain-config>
+        <domain includeSubdomains="true">api.example.com</domain>
+        <pin-set expiration="2025-12-31">
+            <pin digest="SHA-256">AAAA...=</pin>
+            <pin digest="SHA-256">BBBB...=</pin>
+        </pin-set>
+    </domain-config>
+
+    <!-- Trust custom CA (e.g., for staging environment) -->
+    <domain-config>
+        <domain includeSubdomains="true">staging.example.com</domain>
+        <trust-anchors>
+            <certificates src="@raw/staging_ca" />
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+</network-security-config>
+```
+
+```xml
+<!-- AndroidManifest.xml -->
+<application
+    android:networkSecurityConfig="@xml/network_security_config"
+    ... >
+```
+
+!!! tip "When to Use Network Security Config vs OkHttp Pinning"
+    - **Network Security Config** — applies to all HTTP traffic (WebView, third-party libraries), declarative, has built-in expiration. Preferred for most cases.
+    - **OkHttp CertificatePinner** — only applies to OkHttp requests, programmatic, more flexible. Use when you need dynamic pins or per-request logic.
+
+---
+
+## Network Resilience Patterns
+
+| Pattern | When | How |
+|---------|------|-----|
+| **Retry with backoff** | Transient failures (5xx, timeouts) | Exponential backoff: 1s -> 2s -> 4s -> cap |
+| **Circuit breaker** | Repeated failures to same endpoint | Stop calling after N failures, retry after cooldown |
+| **Timeout budget** | Chained API calls | Total timeout across all retries, not per-request |
+| **Offline-first** | Poor connectivity | Serve cached data, sync when online |
+
+```kotlin
+// Exponential backoff with jitter
+suspend fun <T> retryWithBackoff(
+    times: Int = 3,
+    initialDelay: Long = 1000,
+    factor: Double = 2.0,
+    block: suspend () -> T
+): T {
+    var currentDelay = initialDelay
+    repeat(times - 1) {
+        try { return block() } catch (e: IOException) {
+            delay(currentDelay + Random.nextLong(0, currentDelay / 2))
+            currentDelay = (currentDelay * factor).toLong()
+        }
+    }
+    return block() // last attempt — let it throw
+}
+```
+
+---
+
+## Ktor (KMP-Compatible HTTP Client)
+
+Kotlin-first HTTP client with multiplatform support. Alternative to OkHttp + Retrofit for KMP projects.
+
+```kotlin
+// Shared module (commonMain)
+val client = HttpClient {
+    install(ContentNegotiation) {
+        json(Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        })
+    }
+    install(Logging) {
+        level = LogLevel.BODY
+    }
+    install(HttpTimeout) {
+        requestTimeoutMillis = 15_000
+        connectTimeoutMillis = 10_000
+    }
+}
+
+// Making requests
+suspend fun getUser(id: String): User {
+    return client.get("https://api.example.com/users/$id").body()
+}
+
+suspend fun createUser(user: CreateUserRequest): User {
+    return client.post("https://api.example.com/users") {
+        contentType(ContentType.Application.Json)
+        setBody(user)
+    }.body()
+}
+```
+
+| Aspect | OkHttp + Retrofit | Ktor |
+|---|---|---|
+| Platform | Android/JVM only | Multiplatform (Android, iOS, Desktop, JS) |
+| Engine | Single (OkHttp) | Pluggable (OkHttp, CIO, Darwin, etc.) |
+| API style | Interface + annotations | DSL (builder-style) |
+| Kotlin support | Good (suspend functions) | Native (built in Kotlin) |
+| Ecosystem | Massive (most Android apps) | Growing (preferred for KMP) |
+
+!!! tip "Choosing Between Them"
+    - **Android-only project** — OkHttp + Retrofit. Battle-tested, massive ecosystem, best tooling.
+    - **KMP project** — Ktor. Shared networking code across Android, iOS, Desktop. Use the OkHttp engine on Android and Darwin engine on iOS.

@@ -59,8 +59,11 @@ nav:
         - SOLID Principles: mobile/android/architecture-patterns/solid-principles.md
         - Dependency Injection: mobile/android/architecture-patterns/dependency-injection.md
         - ViewModel Internals: mobile/android/architecture-patterns/viewmodel-internals.md
+        - Modularization: mobile/android/architecture-patterns/modularization.md
       - UI:
         - Jetpack Compose: mobile/android/ui/jetpack-compose.md
+        - Compose Side Effects: mobile/android/ui/compose-side-effects.md
+        - Compose Performance: mobile/android/ui/compose-performance.md
         - RecyclerView: mobile/android/ui/recyclerview.md
       - Networking:
         - Networking: mobile/android/networking/networking.md
@@ -79,6 +82,7 @@ nav:
         - WorkManager: mobile/android/system-services/workmanager.md
         - Intents & IPC: mobile/android/system-services/intents-ipc.md
       - Miscellaneous:
+        - Android Essentials: mobile/android/miscellaneous/android-essentials.md
         - Unit Testing: mobile/android/miscellaneous/unit-testing.md
         - App Startup: mobile/android/miscellaneous/app-startup.md
         - Pagination: mobile/android/miscellaneous/pagination.md

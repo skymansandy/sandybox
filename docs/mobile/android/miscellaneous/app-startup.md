@@ -1,257 +1,323 @@
-# App Startup & Miscellaneous
+# App Startup & Initialization
 
 ## Library Initialization
 
-| Approach | Issue |
-|----------|-------|
-| `Application.onCreate` | Lots of initialization code; client libraries need `Context`. |
-| `ContentProvider` | Each library registers its own CP -- increases startup time; initialization order can mismatch. |
-| **App Startup library** | Single `ContentProvider`; explicitly set initialization order. |
+Every library that needs a `Context` at startup faces the same problem: how to initialize without burdening the app developer.
 
----
+### The ContentProvider Approach
 
-## App Startup Times
+Libraries like Firebase and WorkManager register their own `ContentProvider` in the manifest. The system creates all ContentProviders before `Application.onCreate()`, giving each library a `Context` automatically.
 
-| Type | What happens |
-|------|-------------|
-| **Cold Start** | Starting from scratch: Process init --> Application --> Activity `onStart`. |
-| **Warm Start** | Application already created: Activity `onCreate` --> `onStart`. |
-| **Hot Start** | Activity already created: Activity `onStart`. |
-
-!!! info "Display Metrics"
-
-    - **Time to initial display (TTID)**: Time for the first frame to render. Android calculates this automatically.
-    - **Time to full display (TTFD)**: Time for the first frame with full content. Use `reportFullyDrawn()` to mark this.
-
----
-
-## GeoLocation
-
-- Uses **Maps API** and **Google Play Services**.
-- `LocationManager` and callbacks provide a `Location` object (longitude, latitude).
-- Use a **Service** for background location tracking.
-
-!!! warning "Three Permission Levels"
-
-    | Permission | Accuracy | Notes |
-    |-----------|----------|-------|
-    | `ACCESS_COARSE_LOCATION` | Less accurate | Battery friendly, uses internet/cell towers. |
-    | `ACCESS_FINE_LOCATION` | More accurate | Uses GPS hardware. |
-    | `ACCESS_BACKGROUND_LOCATION` | Background access | Required for location access when app is not in foreground. |
-
----
-
-## Is Kotlin `Int` a Primitive?
-
-- **Non-nullable `Int`** --> compiled to JVM primitive `int`. Yes, it is primitive.
-- **Nullable `Int?`** --> compiled to JVM `Integer` wrapper. No, it is not primitive.
-- Even a nullable type without an actual `null` assignment gets optimized to a primitive by the compiler.
-
----
-
-## StrictMode
-
-- Catches accidental **disk or network access on the main thread**.
-- Developer tool available from Developer Options.
-- Should only be enabled in the **debug** build variant.
-
----
-
-## Video vs GIF
-
-- Video format is significantly smaller (e.g., a 1 MB GIF becomes ~200 KB as `.mp4` without audio).
-
----
-
-## Edge to Edge (Android 15)
-
-- App draws content **behind system bars** (status bar, navigation bar).
-
----
-
-## Context
-
-| Type | Lifecycle |
-|------|-----------|
-| **Application Context** | Tied to the app lifecycle. |
-| **Activity Context** | Tied to the activity lifecycle. |
-
-`Context` represents the environment and current state of the application.
-
----
-
-## Application Class
-
-- Base class and **entry point** of the app.
-- Used to initialize one-time components: DI frameworks, databases, analytics, etc.
-
-| Callback | When |
-|----------|------|
-| `onCreate` | Process starts. |
-| `onTerminate` | Not guaranteed to be called. |
-| `onLowMemory` | Older APIs for memory pressure. |
-| `onTrimMemory` | More granular control over memory state. |
-
----
-
-## AndroidManifest
-
-- Critical configuration file that **bridges the app and the OS**.
-- Declares: components, permissions, hardware/software feature requirements.
-
----
-
-## Runtime Permissions
-
-```
-Declare in manifest
-    --> checkSelfPermission()
-    --> ActivityResultLauncher
-    --> shouldShowRequestPermissionRationale()
+```xml
+<!-- Firebase auto-registers this in the merged manifest -->
+<provider
+    android:name="com.google.firebase.provider.FirebaseInitProvider"
+    android:authorities="${applicationId}.firebaseinitprovider"
+    android:exported="false"
+    android:initOrder="100" />
 ```
 
----
+!!! warning "The Problem"
+    Each ContentProvider adds ~2ms to startup. With 10+ libraries each registering their own CP, that is 20ms+ of overhead before your code even runs. ContentProviders also have no mechanism to declare initialization order between libraries.
 
-## Global Crash Handling
+### App Startup Library
 
-- Set `Thread.setDefaultUncaughtExceptionHandler` in `Application.onCreate`.
-- Log the crash, restart, or handle gracefully.
-
----
-
-## Build Variants vs Product Flavors
-
-!!! note "Definitions"
-
-    - **Build Type**: Defines the environment -- `Debug`, `Release`.
-    - **Product Flavor**: Defines an app variation -- Free vs Paid, or entirely different apps. Each flavor can have its own version number, name, and package ID.
-    - **Build Variant** = Build Type x Product Flavor.
-
-??? example "Variant Combinations"
-
-    | Flavor | Build Type | Variant |
-    |--------|-----------|---------|
-    | Free | Debug | `freeDebug` |
-    | Free | Release | `freeRelease` |
-    | Paid | Debug | `paidDebug` |
-    | Paid | Release | `paidRelease` |
-
----
-
-## Accessibility
-
-- Use `contentDescription` for screen readers.
-- Use `sp` for font sizes (respects user font-size preferences).
-- Focus management attributes like `nextFocusDown` for directional navigation.
-
----
-
-## LiveData
-
-- **Observable** data holder, **lifecycle-aware**, **thread-safe**.
-
-| Method | Thread | Behavior |
-|--------|--------|----------|
-| `setValue()` | Main thread only | Synchronous |
-| `postValue()` | Any thread | Asynchronous |
-
----
-
-## LiveData vs StateFlow
-
-- `StateFlow` lives in the coroutines library -- no extra dependency needed.
-- Fully Kotlin, no Android framework dependency.
-
----
-
-## `implementation` vs `api`
-
-!!! tip "Dependency Visibility"
-
-    Scenario: Library **A** depends on Library **B**. Your app depends on **A**.
-
-    - `api`: App **can** see B's code (transitive exposure).
-    - `implementation`: App **cannot** see B's code (encapsulated).
-
----
-
-## Server Driven UI
-
-- Make an API call, receive a UI contract, render UI based on that contract.
-
----
-
-## React Native vs Flutter
-
-| | React Native | Flutter |
-|-|-------------|---------|
-| Architecture | Bridge between native and React UI | Own rendering engine (Skia) |
-| Language | JavaScript | Dart |
-| Code Push | Possible | Not easy |
-
----
-
-## Paging 3
-
-**States:**
-
-| State | Meaning |
-|-------|---------|
-| `Refresh` | Initial load |
-| `Append` | Next page |
-| `Prepend` | Previous page |
-
-**Inner states** for each: `Loading`, `Error`, `NotLoading`.
-
----
-
-## `compileSdk` vs `targetSdk` vs `minSdk`
-
-| Property | Purpose |
-|----------|---------|
-| `compileSdk` | SDK version used for compilation. Cannot be greater than `targetSdk`. |
-| `minSdk` | Lowest Android version the app can be installed on. |
-| `targetSdk` | Version the app has been tested against. Newer OS applies backward-compat behaviors for older targets. |
-
----
-
-## JWT, Encrypt vs Encode
-
-!!! warning "JWT is signed, not encrypted"
-
-    JWT structure: **Header** . **Payload** . **Signature**
-
-| Concept | Secure? | Details |
-|---------|---------|---------|
-| **Encoding** (Base64) | No | Anyone can decode. |
-| **Encryption** | Yes | Requires a secret key to decrypt. |
-
----
-
-## SparseArray Advantages
-
-- Lives in `android.util` package.
-- Uses **integers as keys only**.
-- More **memory-efficient** than `HashMap` (no auto-boxing of keys).
-- Not as fast as `HashMap` for large datasets.
+Jetpack App Startup solves this by providing a **single ContentProvider** that initializes multiple libraries with explicit dependency ordering.
 
 ```kotlin
-import android.util.SparseArray
+// Step 1: Implement Initializer for each library
+class WorkManagerInitializer : Initializer<WorkManager> {
+    override fun create(context: Context): WorkManager {
+        val config = Configuration.Builder()
+            .setMinimumLoggingLevel(Log.DEBUG)
+            .build()
+        WorkManager.initialize(context, config)
+        return WorkManager.getInstance(context)
+    }
 
-val sparseArray = SparseArray<String>()
+    override fun dependencies(): List<Class<out Initializer<*>>> {
+        // No dependencies — runs first
+        return emptyList()
+    }
+}
 
-// Add items
-sparseArray.put(1, "One")
-sparseArray.put(5, "Five")
-sparseArray.put(10, "Ten")
+class AnalyticsInitializer : Initializer<Analytics> {
+    override fun create(context: Context): Analytics {
+        return Analytics.init(context)
+    }
 
-// Retrieve
-val value = sparseArray.get(5) // "Five"
-
-// Iterate
-for (i in 0 until sparseArray.size()) {
-    val key = sparseArray.keyAt(i)
-    val v = sparseArray.valueAt(i)
-    println("$key -> $v")
+    override fun dependencies(): List<Class<out Initializer<*>>> {
+        // Runs AFTER WorkManager is initialized
+        return listOf(WorkManagerInitializer::class.java)
+    }
 }
 ```
+
+```xml
+<!-- Single ContentProvider replaces all library CPs -->
+<provider
+    android:name="androidx.startup.InitializationProvider"
+    android:authorities="${applicationId}.androidx-startup"
+    android:exported="false"
+    tools:node="merge">
+    <meta-data
+        android:name="com.example.WorkManagerInitializer"
+        android:value="androidx.startup" />
+    <meta-data
+        android:name="com.example.AnalyticsInitializer"
+        android:value="androidx.startup" />
+</provider>
+```
+
+The `dependencies()` method creates a directed acyclic graph. App Startup resolves the graph and initializes components in topological order.
+
+---
+
+## Cold, Warm & Hot Start
+
+```mermaid
+flowchart LR
+    A["Cold Start"] -->|"Process created"| B["Application.onCreate()"]
+    B --> C["Activity.onCreate()"]
+    C --> D["First Frame"]
+
+    E["Warm Start"] -->|"Process alive"| C
+    F["Hot Start"] -->|"Activity in memory"| G["Activity.onResume()"]
+    G --> D
+```
+
+| Type | What Happens | Typical Time |
+|------|-------------|-------------|
+| **Cold** | No process exists. Zygote forks a new process, loads the app's classes, runs `Application.onCreate()`, creates the Activity, inflates the layout, draws the first frame. | 500ms - 2s+ |
+| **Warm** | Process is alive but the Activity was destroyed. Skips process creation and `Application.onCreate()`. Recreates the Activity from `onCreate()`. | 200ms - 500ms |
+| **Hot** | Process and Activity are both alive (in memory). The system brings the Activity to the foreground and calls `onResume()`. | <100ms |
+
+!!! note "What makes cold start slow"
+    Cold start includes class loading (DEX → ART), static initializers, ContentProvider creation, `Application.onCreate()`, and the first Activity's full creation cycle. Each step compounds.
+
+---
+
+## TTID vs TTFD
+
+| Metric | What It Measures | How to Measure |
+|--------|-----------------|----------------|
+| **TTID** (Time to Initial Display) | Time from intent to the first frame drawn on screen | Automatic — Android logs `Displayed` in Logcat |
+| **TTFD** (Time to Full Display) | Time from intent to all content being rendered (network data, images) | Manual — call `reportFullyDrawn()` |
+
+```kotlin
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+            if (state is UiState.Loaded) {
+                // Signal that the app is fully drawn with real content
+                LaunchedEffect(Unit) {
+                    reportFullyDrawn()
+                }
+            }
+
+            MainScreen(state)
+        }
+    }
+}
+```
+
+**Macrobenchmark** automates this measurement in CI:
+
+```kotlin
+@LargeTest
+@RunWith(AndroidJUnit4::class)
+class StartupBenchmark {
+    @get:Rule
+    val benchmarkRule = MacrobenchmarkRule()
+
+    @Test
+    fun startupCompilation() = benchmarkRule.measureRepeated(
+        packageName = "com.example.app",
+        metrics = listOf(StartupTimingMetric()),
+        iterations = 5,
+        startupMode = StartupMode.COLD,
+    ) {
+        pressHome()
+        startActivityAndWait()
+    }
+}
+```
+
+---
+
+## Reducing Cold Start Time
+
+### 1. Baseline Profiles
+
+Ship AOT-compiled critical paths so the first run does not rely on interpretation or JIT.
+
+```kotlin
+// baseline-prof.txt — collected via Macrobenchmark
+@get:Rule
+val baselineProfileRule = BaselineProfileRule()
+
+@Test
+fun generateBaselineProfile() = baselineProfileRule.collect(
+    packageName = "com.example.app"
+) {
+    startActivityAndWait()
+    // Navigate through critical user journeys
+    device.findObject(By.text("Home")).click()
+    device.waitForIdle()
+}
+```
+
+### 2. Lazy Initialization
+
+```kotlin
+@HiltAndroidApp
+class MyApp : Application() {
+    // Lazy — only created when first accessed
+    val imageLoader by lazy {
+        ImageLoader.Builder(this)
+            .crossfade(true)
+            .build()
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        // Only critical init here
+        initCrashReporting()
+    }
+}
+```
+
+### 3. Defer Non-Critical Work
+
+Post to the main handler so work runs after the first frame is drawn:
+
+```kotlin
+override fun onCreate() {
+    super.onCreate()
+
+    // CRITICAL — must happen before first frame
+    initCrashReporting()
+    initDependencyInjection()
+
+    // DEFERRED — runs after the first frame
+    Handler(Looper.getMainLooper()).post {
+        initAnalytics()
+        initFeatureFlags()
+        initRemoteConfig()
+    }
+}
+```
+
+### 4. Avoid Heavy Application.onCreate()
+
+| Do | Don't |
+|----|-------|
+| Init crash reporting | Load large JSON configs |
+| Init DI graph (lazy) | Pre-warm caches |
+| Set up strict mode (debug) | Init analytics synchronously |
+| Register ProcessLifecycleOwner | Perform disk I/O |
+
+### 5. First Coroutine Creation Cost
+
+!!! warning "Hidden Startup Tax"
+    The first coroutine launch has significant overhead (~100ms on low-end devices) because the coroutine machinery — `CoroutineDispatcher`, `CoroutineContext`, internal thread pools — must be initialized for the first time.
+
+```kotlin
+// BAD — pays the coroutine init cost at startup
+override fun onCreate() {
+    super.onCreate()
+    lifecycleScope.launch {
+        initSomething() // first coroutine = slow
+    }
+}
+
+// GOOD — use Executors for startup work, coroutines later
+override fun onCreate() {
+    super.onCreate()
+    Executors.newSingleThreadExecutor().execute {
+        initSomething() // no coroutine overhead
+    }
+}
+```
+
+Once the coroutine machinery is initialized (which happens lazily on first use), subsequent coroutine launches are fast. The cost is only paid once per process.
+
+---
+
+## Splash Screen API (Android 12+)
+
+The `SplashScreen` API replaces custom splash Activities. The system draws the splash screen before your app's first frame, eliminating the blank white screen.
+
+```kotlin
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+
+        // Keep splash on screen while loading initial data
+        splashScreen.setKeepOnScreenCondition {
+            viewModel.isLoading.value
+        }
+
+        // Optional: customize exit animation
+        splashScreen.setOnExitAnimationListener { splashScreenView ->
+            val fadeOut = ObjectAnimator.ofFloat(splashScreenView.view, "alpha", 1f, 0f)
+            fadeOut.duration = 300L
+            fadeOut.doOnEnd { splashScreenView.remove() }
+            fadeOut.start()
+        }
+
+        super.onCreate(savedInstanceState)
+        setContent { MyApp() }
+    }
+}
+```
+
+Configure the splash in your theme:
+
+```xml
+<style name="Theme.App.Starting" parent="Theme.SplashScreen">
+    <item name="windowSplashScreenBackground">@color/splash_bg</item>
+    <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    <item name="windowSplashScreenAnimationDuration">300</item>
+    <item name="postSplashScreenTheme">@style/Theme.App</item>
+</style>
+```
+
+---
+
+## Tracing Startup Performance
+
+### Perfetto / System Trace
+
+Capture a system trace to see exactly where time is spent during startup:
+
+```bash
+# Record a startup trace
+adb shell perfetto -o /data/misc/perfetto-traces/startup.perfetto-trace -t 10s \
+  sched freq idle am wm gfx view dalvik
+
+# Pull and open in ui.perfetto.dev
+adb pull /data/misc/perfetto-traces/startup.perfetto-trace
+```
+
+### Method Tracing
+
+For fine-grained method-level analysis:
+
+```kotlin
+override fun onCreate() {
+    Debug.startMethodTracing("startup_trace")
+    super.onCreate()
+    initCriticalComponents()
+    Debug.stopMethodTracing()
+    // Trace saved to /sdcard/Android/data/<pkg>/files/startup_trace.trace
+}
+```
+
+Open the `.trace` file in Android Studio Profiler to see a flame chart of method execution times.
+
+!!! tip "Staff POV"
+    Track cold start time as a **product metric**. Set a budget (e.g., <800ms TTID) and alert when it regresses. Use Firebase Performance for field metrics and Macrobenchmark in CI for lab metrics. Both are needed — field metrics catch device-specific regressions, lab metrics catch code regressions before they ship.
