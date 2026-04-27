@@ -1,0 +1,77 @@
+site_name: Sandybox
+site_description: Personal Knowledge Base
+site_author: Sandy
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: indigo
+    accent: indigo
+  features:
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - tags
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+
+  - Mobile Development:
+    - mobile/index.md
+    - Android:
+      - mobile/android/index.md
+    - iOS:
+      - mobile/ios/index.md
+    - Cross-Platform:
+      - mobile/cross-platform/index.md
+
+  - Programming:
+    - programming/index.md
+    - Languages:
+      - programming/languages/index.md
+    - Design Patterns:
+      - programming/design-patterns/index.md
+    - Data Structures & Algorithms:
+      - programming/dsa/index.md
+
+  - Infrastructure:
+    - infra/index.md
+    - Networking:
+      - infra/networking/index.md
+    - DevOps:
+      - infra/devops/index.md
+    - Databases:
+      - infra/databases/index.md
+
+  - Science & Universe:
+    - science/index.md
+    - Physics:
+      - science/physics/index.md
+    - Astronomy:
+      - science/astronomy/index.md
+
+  - Tools & Productivity:
+    - tools/index.md
+
+  - TIL:
+    - til/index.md
