@@ -1,0 +1,152 @@
+# Content Providers
+
+A **Content Provider** is an Android component that provides a secure, consistent interface for sharing data across applications. It encapsulates data and exposes it via queries, without revealing the underlying database or storage mechanism.
+
+## Content URI
+
+A Content URI identifies data in a provider and consists of two parts:
+
+| Part | Description | Example |
+|---|---|---|
+| **Authority** | Uniquely identifies the content provider | `com.example.myapp.provider` |
+| **Path** | Identifies the data type / table | `/users` |
+
+Full URI: `content://com.example.myapp.provider/users`
+
+## Creating a Content Provider
+
+### Registration in Manifest
+
+```xml
+<provider
+    android:name=".MyContentProvider"
+    android:authorities="com.example.myapp.provider"
+    android:exported="true" />
+```
+
+### Implementation
+
+```kotlin
+class MyContentProvider : ContentProvider() {
+
+    override fun onCreate(): Boolean {
+        // Initialize database or data source
+        return true
+    }
+
+    override fun query(
+        uri: Uri,
+        projection: Array<String>?,
+        selection: String?,
+        selectionArgs: Array<String>?,
+        sortOrder: String?
+    ): Cursor? {
+        // Query and return a Cursor
+        return database.query("users", projection, selection, selectionArgs, null, null, sortOrder)
+    }
+
+    override fun insert(uri: Uri, values: ContentValues?): Uri? {
+        val id = database.insert("users", null, values)
+        context?.contentResolver?.notifyChange(uri, null)
+        return ContentUris.withAppendedId(uri, id)
+    }
+
+    override fun update(
+        uri: Uri,
+        values: ContentValues?,
+        selection: String?,
+        selectionArgs: Array<String>?
+    ): Int {
+        return database.update("users", values, selection, selectionArgs)
+    }
+
+    override fun delete(
+        uri: Uri,
+        selection: String?,
+        selectionArgs: Array<String>?
+    ): Int {
+        return database.delete("users", selection, selectionArgs)
+    }
+
+    override fun getType(uri: Uri): String? {
+        return "vnd.android.cursor.dir/vnd.com.example.myapp.provider.users"
+    }
+}
+```
+
+## Accessing Data via ContentResolver
+
+Other apps (or your own) access a content provider through `ContentResolver`.
+
+=== "Query"
+
+    ```kotlin
+    val cursor = contentResolver.query(
+        Uri.parse("content://com.example.myapp.provider/users"),
+        arrayOf("id", "name", "email"),  // projection
+        "name = ?",                       // selection
+        arrayOf("Sandy"),                 // selectionArgs
+        "name ASC"                        // sortOrder
+    )
+
+    cursor?.use {
+        while (it.moveToNext()) {
+            val name = it.getString(it.getColumnIndexOrThrow("name"))
+            val email = it.getString(it.getColumnIndexOrThrow("email"))
+            Log.d("CP", "Name: $name, Email: $email")
+        }
+    }
+    ```
+
+=== "Insert"
+
+    ```kotlin
+    val values = ContentValues().apply {
+        put("name", "Sandy")
+        put("email", "sandy@example.com")
+    }
+
+    val newUri = contentResolver.insert(
+        Uri.parse("content://com.example.myapp.provider/users"),
+        values
+    )
+    ```
+
+## Security
+
+Protect your content provider with custom permissions declared in the manifest.
+
+```xml
+<permission
+    android:name="com.example.myapp.READ_DATA"
+    android:protectionLevel="signature" />
+
+<provider
+    android:name=".MyContentProvider"
+    android:authorities="com.example.myapp.provider"
+    android:readPermission="com.example.myapp.READ_DATA"
+    android:exported="true" />
+```
+
+!!! note "protectionLevel=\"signature\""
+    Setting `protectionLevel` to `signature` means only apps signed with the **same signing key** can access the provider. This is the most secure option for sharing data between your own apps.
+
+## DI with Content Provider
+
+Content Providers are initialized **before** `Application.onCreate()`. If your DI framework (e.g., Hilt, Koin) initializes in `onCreate()`, the provider won't have access to injected dependencies.
+
+!!! tip "Solution: Use attachBaseContext"
+    Initialize your DI framework in `attachBaseContext()` instead of `onCreate()`. This method is called **before** `onCreate()` and before any Content Provider is initialized.
+
+    ```kotlin
+    class MyApplication : Application() {
+        override fun attachBaseContext(base: Context) {
+            super.attachBaseContext(base)
+            // Initialize DI here - runs before Content Providers
+            DaggerAppComponent.builder()
+                .application(this)
+                .build()
+                .inject(this)
+        }
+    }
+    ```

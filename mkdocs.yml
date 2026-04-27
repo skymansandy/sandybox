@@ -9,8 +9,11 @@ theme:
     primary: indigo
     accent: indigo
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
-    - navigation.expand
+    - navigation.indexes
+    - navigation.top
     - search.suggest
     - search.highlight
     - content.code.copy
@@ -22,7 +25,11 @@ plugins:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -34,12 +41,48 @@ markdown_extensions:
   - md_in_html
 
 nav:
-  - Home: index.md
+  - Home:
+    - index.md
 
-  - Mobile Development:
+  - Mobile:
     - mobile/index.md
     - Android:
       - mobile/android/index.md
+      - Core Platform:
+        - Architecture & Runtime: mobile/android/core-platform/architecture.md
+        - Activity, Fragment & Lifecycle: mobile/android/core-platform/app-components.md
+        - Views & UI Components: mobile/android/core-platform/views.md
+      - Concurrency:
+        - Multithreading: mobile/android/concurrency/multithreading.md
+      - Architecture & Patterns:
+        - Design Patterns: mobile/android/architecture-patterns/design-patterns.md
+        - SOLID Principles: mobile/android/architecture-patterns/solid-principles.md
+        - Dependency Injection: mobile/android/architecture-patterns/dependency-injection.md
+        - ViewModel Internals: mobile/android/architecture-patterns/viewmodel-internals.md
+      - UI:
+        - Jetpack Compose: mobile/android/ui/jetpack-compose.md
+        - RecyclerView: mobile/android/ui/recyclerview.md
+      - Networking:
+        - Networking: mobile/android/networking/networking.md
+      - Data & Storage:
+        - Storage: mobile/android/data-storage/storage.md
+        - Serialization: mobile/android/data-storage/serialization.md
+      - Performance:
+        - Memory Management: mobile/android/performance/memory-management.md
+        - APK Optimization: mobile/android/performance/apk-optimization.md
+        - Bitmap Pool: mobile/android/performance/bitmap-pool.md
+      - System Services:
+        - Services: mobile/android/system-services/services.md
+        - Broadcast Receivers: mobile/android/system-services/broadcast-receivers.md
+        - Content Providers: mobile/android/system-services/content-providers.md
+        - Notifications & FCM: mobile/android/system-services/notifications.md
+        - WorkManager: mobile/android/system-services/workmanager.md
+        - Intents & IPC: mobile/android/system-services/intents-ipc.md
+      - Miscellaneous:
+        - Unit Testing: mobile/android/miscellaneous/unit-testing.md
+        - App Startup: mobile/android/miscellaneous/app-startup.md
+        - Pagination: mobile/android/miscellaneous/pagination.md
+        - Product Metrics: mobile/android/miscellaneous/product-metrics.md
     - iOS:
       - mobile/ios/index.md
     - Cross-Platform:
@@ -49,6 +92,11 @@ nav:
     - programming/index.md
     - Languages:
       - programming/languages/index.md
+      - Kotlin:
+        - Language Essentials: programming/languages/kotlin/essentials.md
+        - Coroutines: programming/languages/kotlin/coroutines.md
+        - Flow: programming/languages/kotlin/flow.md
+        - KMP: programming/languages/kotlin/kmp.md
     - Design Patterns:
       - programming/design-patterns/index.md
     - Data Structures & Algorithms:
@@ -63,14 +111,14 @@ nav:
     - Databases:
       - infra/databases/index.md
 
-  - Science & Universe:
+  - Science:
     - science/index.md
     - Physics:
       - science/physics/index.md
     - Astronomy:
       - science/astronomy/index.md
 
-  - Tools & Productivity:
+  - Tools:
     - tools/index.md
 
   - TIL:
