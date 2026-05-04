@@ -268,3 +268,29 @@ binding.user = User("Sandy")
         start()
     }
     ```
+
+---
+
+## Interview Q&A
+
+??? question "Describe the View rendering pipeline (measure, layout, draw)."
+    The View rendering pipeline has three phases: **Measure** determines the size of each view via `onMeasure()` (must call `setMeasuredDimension()`), **Layout** positions each view within its parent via `onLayout()`, and **Draw** renders the view onto a Canvas via `onDraw()`. The parent ViewGroup drives each phase top-down through the view hierarchy.
+
+??? question "What is the difference between invalidate() and requestLayout()?"
+    `invalidate()` triggers only a redraw (the draw phase), skipping measure and layout — use it when the view's appearance changes but not its size. `requestLayout()` triggers a full pass through measure, layout, and draw — use it when the view's size or position needs to change.
+
+??? question "What is ViewStub and when would you use it?"
+    ViewStub is a lightweight, invisible placeholder that lazily inflates a layout only when needed (via `inflate()` or `setVisibility(VISIBLE)`). It is useful for views that are rarely shown (error states, empty states) to avoid the cost of inflating them during initial layout. Once inflated, it removes itself from the hierarchy and cannot be reused.
+
+??? question "What is the difference between ViewBinding and DataBinding?"
+    ViewBinding generates a binding class that provides direct references to views, replacing `findViewById()`. DataBinding does everything ViewBinding does plus allows binding data directly in XML using expressions (`@{user.name}`), supports two-way binding, and uses the `<layout>` tag. ViewBinding is simpler and has faster build times.
+
+??? question "Explain SurfaceView vs TextureView."
+    SurfaceView provides a dedicated drawing surface that renders on a separate non-UI thread, making it efficient for video playback and games, but it cannot be transformed (scaled, rotated, animated) like a regular view. TextureView renders on the UI thread and supports all standard view transformations but is less efficient for high-frequency rendering.
+
+!!! tip "Further Reading"
+    - [Custom View Components | Android Developers](https://developer.android.com/develop/ui/views/layout/custom-views/custom-components)
+    - [How Android Draws Views | Android Developers](https://developer.android.com/develop/ui/views/how-android-draws)
+    - [View Binding | Android Developers](https://developer.android.com/topic/libraries/view-binding)
+    - [Data Binding | Android Developers](https://developer.android.com/topic/libraries/data-binding)
+    - [MotionLayout | Android Developers](https://developer.android.com/develop/ui/views/animations/motionlayout)

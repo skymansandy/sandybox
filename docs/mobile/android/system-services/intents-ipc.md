@@ -172,3 +172,28 @@ The **Binder** is Android's low-level IPC mechanism, built on a kernel-level dri
 
 !!! note
     You rarely interact with Binder directly. AIDL and Messenger provide higher-level abstractions for most IPC needs.
+
+---
+
+## Interview Q&A
+
+??? question "What is the difference between an explicit and implicit intent?"
+    An explicit intent specifies the exact component (class) to start and is used for in-app navigation. An implicit intent declares a general action (like `ACTION_VIEW` or `ACTION_SEND`) and the system resolves which app or component can handle it. Implicit intents require at least one matching intent filter to be resolved.
+
+??? question "What is a PendingIntent and why is it needed?"
+    A PendingIntent wraps an intent and grants another app or the system permission to execute it on your app's behalf at a later time. It is commonly used with notifications, alarms, and widgets where the triggering component is outside your app's process. On Android 12+, you must specify `FLAG_IMMUTABLE` or `FLAG_MUTABLE` for security.
+
+??? question "What is the difference between a deep link and an Android App Link?"
+    A deep link uses a custom scheme (e.g., `myapp://product`) and can be hijacked by other apps that register the same scheme. An Android App Link uses HTTPS with `autoVerify="true"` and requires a Digital Asset Links JSON file hosted on your domain, which guarantees only your verified app handles those URLs.
+
+??? question "What are the main IPC mechanisms in Android?"
+    Android provides Binder (low-level, high-performance IPC framework), Intents (message objects for cross-component communication), Content Providers (structured data sharing across apps), and Messenger (simple message-passing via a Handler). All higher-level IPC mechanisms are built on top of the Binder kernel driver.
+
+??? question "What is a Bundle and what types of data can it carry?"
+    A Bundle is a key-value mapping used to pass data between Android components. It supports primitives (Int, String, Boolean), `Serializable` objects, and `Parcelable` objects. `Parcelable` is preferred on Android because it is faster than `Serializable` since it avoids reflection-based serialization.
+
+!!! tip "Further Reading"
+    - [Intents and Intent Filters - Android Developers](https://developer.android.com/guide/components/intents-filters)
+    - [Deep Links and App Links - Android Developers](https://developer.android.com/training/app-links)
+    - [PendingIntent - Android Developers](https://developer.android.com/reference/android/app/PendingIntent)
+    - [Android IPC with AIDL - Android Developers](https://developer.android.com/develop/background-work/services/aidl)

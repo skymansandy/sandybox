@@ -180,3 +180,28 @@ class MyForegroundService : Service() {
 
 !!! tip
     Foreground services require the `FOREGROUND_SERVICE` permission and a declared `foregroundServiceType` in the manifest (Android 10+).
+
+---
+
+## Interview Q&A
+
+??? question "What is the difference between a Started Service and a Bound Service?"
+    A Started Service runs indefinitely until it stops itself or is stopped by a client, and it does not return a result. A Bound Service provides a client-server interface via `IBinder`, allowing components to bind, interact, and unbind. A service can be both started and bound simultaneously — it stays alive until it is both stopped and all clients unbind.
+
+??? question "What are the differences between START_STICKY, START_NOT_STICKY, and START_REDELIVER_INTENT?"
+    `START_STICKY` restarts the service with a null intent after the system kills it — suitable for music players. `START_NOT_STICKY` does not restart the service — suitable for periodic tasks. `START_REDELIVER_INTENT` restarts the service and re-delivers the original intent — suitable for file downloads where the work must complete.
+
+??? question "Why does a Service run on the main thread by default, and how do you handle long-running work?"
+    Android Services share the main thread with Activities and UI components. For long-running work, you should use a separate thread, `CoroutineWorker`, or `WorkManager`. Foreground services with their own threads or `IntentService` (deprecated) were common patterns. Today, `WorkManager` or coroutines launched in a service are preferred.
+
+??? question "When should you use a Foreground Service vs WorkManager?"
+    Use a Foreground Service for tasks that the user is actively aware of and that need to run continuously, such as music playback or navigation. Use WorkManager for deferrable background tasks that need guaranteed execution, such as syncing data or uploading logs. Foreground services require a visible notification and the `FOREGROUND_SERVICE` permission.
+
+??? question "What is AIDL and when would you use it over Messenger?"
+    AIDL (Android Interface Definition Language) enables IPC between different processes or apps and supports handling multiple concurrent client requests. Messenger is simpler but serializes all requests through a single Handler, making it unsuitable for concurrent access. Use AIDL when multiple clients need to call service methods simultaneously.
+
+!!! tip "Further Reading"
+    - [Services overview - Android Developers](https://developer.android.com/develop/background-work/services)
+    - [Bound Services - Android Developers](https://developer.android.com/develop/background-work/services/bound-services)
+    - [Foreground Services - Android Developers](https://developer.android.com/develop/background-work/services/foreground-services)
+    - [AIDL - Android Developers](https://developer.android.com/develop/background-work/services/aidl)

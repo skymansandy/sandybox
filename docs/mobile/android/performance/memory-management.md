@@ -355,3 +355,34 @@ fun SearchScreen() {
 - [ ] Use `const val` for compile-time constants (avoids allocation)
 - [ ] Avoid autoboxing — use primitive-friendly collections (`SparseArray`, `IntArray`)
 - [ ] Use `RecyclerView` / `LazyColumn` instead of inflating large lists
+
+---
+
+## Interview Q&A
+
+??? question "What are the main causes of memory leaks in Android?"
+    The most common causes are: static references to Activity or Context, unregistered listeners/callbacks, inner classes holding implicit references to their outer Activity, and Handler/Runnable callbacks that outlive the Activity. All of these prevent garbage collection by keeping a strong reference path from a GC root to the destroyed Activity.
+
+??? question "How does LeakCanary detect memory leaks?"
+    LeakCanary watches destroyed Activities and Fragments using a `WeakReference` paired with a `ReferenceQueue`. After a 5-second delay, if the object has not been enqueued (meaning it was not garbage collected), LeakCanary triggers GC and checks again. If the object is still alive, it dumps the heap and uses the Shark library to find the shortest strong reference path from a GC root to the leaked object.
+
+??? question "What is the difference between the heap and the stack in Android?"
+    The heap stores objects and class instances and is shared per-app (each app gets its own Dalvik/ART heap with a manufacturer-set limit). The stack stores local variables, primitive types, and function call frames, and is per-thread with a LIFO structure. Exceeding the heap limit causes `OutOfMemoryError`; exceeding the stack causes `StackOverflowError`.
+
+??? question "What survives process death and what does not?"
+    ViewModel survives configuration changes but NOT process death. `SavedStateHandle` and `onSaveInstanceState` survive both configuration changes and process death. Only persistent storage (Room, DataStore, SharedPreferences) survives app updates. To test process death, background the app and run `adb shell am kill`.
+
+??? question "Why is largeHeap generally a bad idea?"
+    `largeHeap` increases the app's heap limit, which leads to longer GC pauses (more heap to scan), more jank, and increased competition with other apps for system memory. On low-end devices it may grant only marginally more memory. It masks underlying leaks rather than fixing them — the app will still eventually OOM, just later.
+
+??? question "How does Android's Low Memory Killer decide which process to kill?"
+    The LMK daemon assigns priority levels based on component state. Foreground processes (visible Activity, foreground Service) are killed last. Cached processes (backgrounded Activities) are killed freely in LRU order. Empty processes (no active components) are killed first. This is why long-running background work must use WorkManager.
+
+---
+
+!!! tip "Further Reading"
+    - [Manage your app's memory](https://developer.android.com/topic/performance/memory)
+    - [LeakCanary Documentation](https://square.github.io/leakcanary/)
+    - [Save UI states](https://developer.android.com/topic/libraries/architecture/saving-states)
+    - [Android Memory Profiler](https://developer.android.com/studio/profile/memory-profiler)
+    - [Processes and app lifecycle](https://developer.android.com/guide/components/activities/process-lifecycle)

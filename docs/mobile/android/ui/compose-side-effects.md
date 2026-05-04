@@ -431,3 +431,28 @@ fun NoteEditor(viewModel: NoteViewModel) {
 | `DisposableEffect(key)` | Enter composition / key change | N/A | `onDispose {}` block | No |
 | `SideEffect` | Every successful recomposition | N/A (skipped if cancelled) | None | No |
 | `produceState` | Enter composition / key change | Leave composition / key change | Coroutine cancellation | Yes (internal) |
+
+---
+
+## Interview Q&A
+
+??? question "When should you use LaunchedEffect vs rememberCoroutineScope?"
+    Use `LaunchedEffect` when you need to launch a coroutine automatically on composition entry or when a key changes. Use `rememberCoroutineScope` when you need to launch coroutines from **callbacks** like `onClick`. Never call `scope.launch {}` directly during composition — that creates a new coroutine on every recomposition.
+
+??? question "What is the purpose of rememberUpdatedState?"
+    `rememberUpdatedState` captures the latest value of a parameter inside a long-lived effect without restarting it. It is essential in `LaunchedEffect(Unit)` where the effect runs once but the referenced values may change on recomposition. Without it, the effect closes over stale initial values.
+
+??? question "How does DisposableEffect differ from LaunchedEffect?"
+    `DisposableEffect` is for non-suspend setup/cleanup pairs (register/unregister listeners, acquire/release resources) and requires a mandatory `onDispose` block. `LaunchedEffect` launches a coroutine and relies on coroutine cancellation for cleanup. Use `DisposableEffect` when you are working with callback-based APIs, not suspend functions.
+
+??? question "When is derivedStateOf useful, and when is it unnecessary?"
+    `derivedStateOf` is useful when the derived value changes **less frequently** than its inputs — for example, converting a scroll offset into a boolean "show button" flag. It is unnecessary when the output changes at the same rate as the input, because it adds overhead without reducing recompositions.
+
+??? question "What does SideEffect guarantee about execution timing?"
+    `SideEffect` runs after every **successful** recomposition. If recomposition is cancelled (because state changed again before it completed), the `SideEffect` does not execute. It provides no coroutine scope and no cleanup mechanism, so it is only suitable for lightweight synchronization with non-Compose systems like analytics.
+
+!!! tip "Further Reading"
+    - [Side-effects in Compose](https://developer.android.com/develop/ui/compose/side-effects)
+    - [State and Jetpack Compose](https://developer.android.com/develop/ui/compose/state)
+    - [Compose lifecycle](https://developer.android.com/develop/ui/compose/lifecycle)
+    - [Kotlin coroutines on Android](https://developer.android.com/kotlin/coroutines)

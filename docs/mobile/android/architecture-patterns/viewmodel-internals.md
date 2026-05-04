@@ -345,3 +345,28 @@ fun AnyScreen() {
 ```
 
 Use sparingly. Activity-scoped ViewModels stay in memory for the entire Activity lifetime.
+
+---
+
+## Interview Q&A
+
+??? question "How does ViewModel survive configuration changes?"
+    The `ViewModelStore` (a HashMap of ViewModels) is saved in the `ActivityClientRecord` inside `ActivityThread` before the Activity is destroyed. When the new Activity is created after rotation, it retrieves the same `ViewModelStore` from the `ActivityClientRecord`. The ViewModel is only destroyed when the Activity finishes for good (back press, `finish()`), which triggers `onCleared()`.
+
+??? question "What is the difference between SavedStateHandle and ViewModel fields?"
+    ViewModel fields survive configuration changes but are lost on process death. SavedStateHandle persists data into the saved instance state Bundle, surviving both configuration changes and process death. Use ViewModel fields for fetched data and computed state; use SavedStateHandle for user input, scroll position, and selected tabs (small values only — the Bundle has a ~512KB limit).
+
+??? question "What is viewModelScope and why should you use it?"
+    `viewModelScope` is a CoroutineScope built into every ViewModel, configured with `SupervisorJob() + Dispatchers.Main.immediate`. It is automatically cancelled when `onCleared()` is called. You should use it instead of creating custom scopes because it handles cancellation automatically and prevents coroutine leaks tied to the ViewModel's lifecycle.
+
+??? question "How do you share a ViewModel between Fragments or Compose destinations?"
+    In Fragments, scope the ViewModel to the host Activity using `by activityViewModels()`. In Compose Navigation, scope it to a nested navigation graph by passing the graph's `ViewModelStoreOwner` to `hiltViewModel()`. The ViewModel lives as long as the shared scope (Activity or nested nav graph) is alive.
+
+??? question "When is onCleared() called and when is it NOT called?"
+    `onCleared()` is called when the owning lifecycle finishes permanently — user presses back, `finish()` is called, Fragment is removed from backstack, or NavBackStackEntry is popped. It is NOT called during configuration changes (rotation, locale, dark mode) or process death. For process death cleanup, use SavedStateHandle to restore state instead.
+
+!!! tip "Further Reading"
+    - [ViewModel overview](https://developer.android.com/topic/libraries/architecture/viewmodel) — Official ViewModel guide
+    - [Saved State module for ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-savedstate) — SavedStateHandle documentation
+    - [State and Jetpack Compose](https://developer.android.com/develop/ui/compose/state) — State management in Compose with ViewModel
+    - [Architecture: The ViewModel](https://medium.com/androiddevelopers/viewmodels-a-simple-example-ed5ac416317e) — Android Developers blog deep dive

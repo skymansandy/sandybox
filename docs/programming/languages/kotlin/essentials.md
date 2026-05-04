@@ -1084,3 +1084,32 @@ fun test(x: Any) {
 
 !!! note "Migration"
     K2 is **not a language change** — your existing code works. But some edge cases around type inference may behave differently. Run your test suite when upgrading. Use `languageVersion = "2.0"` in your Gradle build to opt in.
+
+---
+
+## Interview Q&A
+
+??? question "What is the difference between `val` and `const val`?"
+    `val` is evaluated at runtime and can hold any type, while `const val` is evaluated at compile time, is limited to primitives and `String`, and is inlined at every usage site. `const val` must be declared at the top level, in an `object`, or in a `companion object`.
+
+??? question "How do sealed classes differ from enums?"
+    Enums define a fixed set of constants that all share the same structure. Sealed classes allow each subclass to have its own distinct properties, constructors, and state. Both guarantee exhaustive `when` expressions, but sealed classes are far more flexible for modeling complex hierarchies.
+
+??? question "Explain the difference between `inline`, `noinline`, and `crossinline`."
+    `inline` copies the function and lambda bodies to the call site, eliminating lambda object allocation and enabling non-local returns. `noinline` prevents a specific lambda parameter from being inlined (needed when storing or passing it elsewhere). `crossinline` disallows non-local returns in a lambda that will be invoked from a different execution context, such as inside a `Runnable`.
+
+??? question "When would you use `let` over a null check with `if`?"
+    `let` is preferred on mutable `var` properties because it captures a thread-safe snapshot of the value. For local `val` variables, `if (x != null)` is perfectly safe and often more readable since the compiler smart-casts correctly.
+
+??? question "What is reified and why does it require inline?"
+    `reified` retains generic type information at runtime, allowing `is` checks and `::class` access on type parameters. It requires `inline` because the compiler substitutes the actual type at each call site during inlining -- without inlining, type erasure would remove the type information on the JVM.
+
+??? question "What is the difference between an extension function and a member function?"
+    Extension functions are resolved at compile time based on the declared type (static dispatch), while member functions use dynamic dispatch resolved at runtime. Extensions cannot access private members and are compiled to static utility methods under the hood.
+
+!!! tip "Further Reading"
+    - [Kotlin Language Documentation](https://kotlinlang.org/docs/home.html) -- official reference for all language features
+    - [Sealed Classes and Interfaces](https://kotlinlang.org/docs/sealed-classes.html) -- official guide on sealed hierarchies
+    - [Inline Functions](https://kotlinlang.org/docs/inline-functions.html) -- covers inline, noinline, crossinline, and reified
+    - [Scope Functions](https://kotlinlang.org/docs/scope-functions.html) -- official guide with decision flowchart
+    - [Generics: in, out, where](https://kotlinlang.org/docs/generics.html) -- variance, projections, and type constraints

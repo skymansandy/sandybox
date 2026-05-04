@@ -584,3 +584,31 @@ class UserViewModelTest {
 !!! tip "Debugging the dependency graph"
     - Check generated code in `build/generated/source/kapt/` (or `ksp/`) — Dagger generates readable factory classes
     - Use `@Component` dependency graph dumps: add `dagger.fullBindingGraphValidation=WARNING` to gradle.properties
+
+---
+
+## Interview Q&A
+
+??? question "What is the difference between @Binds and @Provides in Dagger?"
+    `@Binds` is an abstract function that tells Dagger to map an implementation to an interface — it generates no code and has zero runtime cost. `@Provides` is a concrete function that Dagger calls to create an instance, used when you need constructor calls, builder patterns, or configuration logic. Prefer `@Binds` for simple interface-to-implementation mappings.
+
+??? question "How does Hilt differ from raw Dagger?"
+    Hilt provides predefined components tied to Android lifecycles (SingletonComponent, ViewModelComponent, etc.), automatic component creation and destruction, and eliminates manual `inject()` calls via `@AndroidEntryPoint`. It reduces boilerplate significantly while still using Dagger's compile-time validation under the hood.
+
+??? question "What does @Singleton actually mean in Dagger?"
+    `@Singleton` does not magically make something a singleton. It means Dagger creates one instance per component that carries the `@Singleton` scope. If you create two `@Singleton @Component` instances, you get two separate singletons. Without any scope annotation, Dagger creates a new instance every time the dependency is requested.
+
+??? question "What is the difference between Service Locator and Dependency Injection?"
+    With Service Locator (like Koin), classes actively request dependencies from a registry at runtime — dependencies are hidden inside the class. With DI (Dagger/Hilt), dependencies are declared in the constructor and provided externally — they are explicit and validated at compile time. DI catches missing bindings during compilation; Service Locator crashes at runtime.
+
+??? question "When would you use @EntryPoint in Hilt?"
+    Use `@EntryPoint` when you need injection in classes Hilt doesn't manage directly, such as ContentProviders (created before Application.onCreate), custom Views not inflated by Hilt-aware Activities, or third-party library factories like WorkManager custom factories and Glide modules.
+
+??? question "How do you handle testing with Hilt?"
+    Use `@HiltAndroidTest` on the test class, `@UninstallModules` to remove real modules, and `@BindValue` to bind test fakes directly into the graph. `HiltAndroidRule` must be applied before other rules that need injection. This lets you swap production implementations with fakes without modifying production code.
+
+!!! tip "Further Reading"
+    - [Dependency injection in Android](https://developer.android.com/training/dependency-injection) — Official DI guide
+    - [Hilt documentation](https://developer.android.com/training/dependency-injection/hilt-android) — Complete Hilt setup and usage
+    - [Dagger documentation](https://dagger.dev/dev-guide/) — Core Dagger concepts and advanced usage
+    - [Hilt and Jetpack integrations](https://developer.android.com/training/dependency-injection/hilt-jetpack) — ViewModel injection, WorkManager, Navigation

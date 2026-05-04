@@ -51,3 +51,24 @@ GET /posts?cursor=eyJpZCI6MTAwfQ==&limit=20
     | Dynamic data | Duplicates possible | Reliable |
     | Random page access | Yes (`?page=5`) | No (sequential only) |
     | Performance on large datasets | Slower (DB scans offset rows) | Faster (seeks directly) |
+
+---
+
+## Interview Q&A
+
+??? question "What is the difference between offset pagination and cursor pagination?"
+    Offset pagination uses a page number and limit to calculate a fixed offset into the dataset. Cursor pagination uses a pointer (cursor) to a specific item and fetches the next batch from that point. Cursor pagination is more resilient to insertions and deletions in dynamic datasets, while offset pagination supports random page access.
+
+??? question "Why can offset pagination return duplicate items in dynamic feeds?"
+    When new items are inserted at the top of a feed (e.g., new posts on Instagram), the offset shifts. A user who was on page 2 may see items that shifted from page 1 into page 2's range, resulting in duplicates. Cursor pagination avoids this by anchoring to a specific item rather than a numeric position.
+
+??? question "What is keyset pagination and how does it differ from generic cursor pagination?"
+    Keyset pagination is a form of cursor pagination where the cursor is based on a sorted field like `timestamp` or `created_at`. The backend encodes the last seen key into a cursor token that the client passes back for the next page. This allows the database to seek directly to the correct position instead of scanning offset rows, providing better performance on large datasets.
+
+??? question "When would you choose offset pagination over cursor pagination?"
+    Choose offset pagination when the dataset is relatively static, when you need random page access (e.g., "jump to page 5"), or when simplicity is more important than handling concurrent data changes. It is also easier to implement on both client and server sides.
+
+!!! tip "Further Reading"
+    - [Paging library overview - Android Developers](https://developer.android.com/topic/libraries/architecture/paging/v3-overview)
+    - [Load and display paged data - Android Developers](https://developer.android.com/topic/libraries/architecture/paging/v3-paged-data)
+    - [Paginating Real-Time Data with Firestore](https://firebase.google.com/docs/firestore/query-data/query-cursors)

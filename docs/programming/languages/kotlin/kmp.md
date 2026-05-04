@@ -552,3 +552,29 @@ class UserListPresenter(private val repository: UserRepository) {
 
 !!! warning "Memory model"
     Kotlin/Native's new memory manager (default since 1.7.20) eliminates the old freeze/thread-confinement issues. Mutable shared state works across threads, but you still need proper synchronization (Mutex, AtomicReference, etc.) just like on JVM.
+
+---
+
+## Interview Q&A
+
+??? question "What is the `expect`/`actual` mechanism in KMP?"
+    `expect` declares an API contract in common code without providing an implementation. Each platform source set provides an `actual` implementation. The compiler ensures every `expect` declaration has a matching `actual` on each target. Since Kotlin 2.0, `expect` declarations can include default implementations that platforms can optionally override.
+
+??? question "What code should you share in KMP and what should stay native?"
+    Share business logic, data models, networking (Ktor), local storage (SQLDelight/Room), serialization, and validation in `commonMain`. Keep UI, platform navigation, OS-specific APIs (camera, push notifications), and deep system integrations native. Start with the data layer for highest ROI.
+
+??? question "How does Kotlin/Native interact with Swift and Objective-C?"
+    Kotlin/Native compiles shared code into an Objective-C framework, which Swift consumes. This introduces limitations: suspend functions become completion-handler callbacks, sealed classes lose exhaustive switch support, and default parameters are not available. Libraries like SKIE and KMP-NativeCoroutines generate Swift-friendly wrappers to address these gaps.
+
+??? question "What is the KMP source set hierarchy and why does it matter?"
+    Source sets form a tree from `commonMain` down to platform-specific sets. Intermediate source sets like `appleMain`, `nativeMain`, or `jvmMain` let you share code between subsets of platforms without duplicating it. For example, `appleMain` shares code across iOS, macOS, tvOS, and watchOS.
+
+??? question "What is the difference between Compose Multiplatform and KMP?"
+    KMP is the Kotlin compiler infrastructure for sharing non-UI code across platforms. Compose Multiplatform is JetBrains' framework built on top of KMP that extends Jetpack Compose UI to iOS, Desktop, and Web. You can use KMP without Compose Multiplatform by keeping UI native on each platform.
+
+!!! tip "Further Reading"
+    - [Kotlin Multiplatform Overview](https://kotlinlang.org/docs/multiplatform.html) -- official KMP documentation and getting started guide
+    - [Get Started with KMP](https://www.jetbrains.com/help/kotlin-multiplatform-dev/multiplatform-getting-started.html) -- JetBrains step-by-step tutorial
+    - [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) -- official page for shared UI across platforms
+    - [SKIE by Touchlab](https://skie.touchlab.co/) -- Swift-friendly API generation for KMP
+    - [KMP Library Search](https://klibs.io/) -- discover multiplatform-compatible Kotlin libraries

@@ -534,3 +534,28 @@ class HomeViewModel @Inject constructor(
 
 !!! note "MVVM vs MVI"
     The difference is mostly about strictness. MVVM with StateFlow and sealed intents *is* effectively MVI. Pure MVI adds a formal reducer function and prohibits direct state mutations outside the reducer. Choose based on team discipline needs — not dogma.
+
+---
+
+## Interview Q&A
+
+??? question "What is the difference between Factory Method and Abstract Factory?"
+    Factory Method uses a single method to decide which subclass to instantiate, returning an interface. Abstract Factory produces families of related objects — it's a factory of factories. Use Factory Method for single object creation and Abstract Factory when you have multiple related types that vary together (e.g., a UI toolkit with buttons, text fields, and dialogs).
+
+??? question "Why is the Repository pattern important in Android?"
+    Repository abstracts data sources behind a single interface, so the ViewModel doesn't know whether data comes from network, database, or cache. This enables offline-first strategies, makes business logic testable with fakes, and keeps data-layer concerns (Retrofit, Room) out of the presentation layer.
+
+??? question "What is Unidirectional Data Flow (UDF) and why does it matter?"
+    UDF means state flows in one direction (ViewModel to UI) and events flow in the opposite direction (UI to ViewModel). This eliminates circular dependencies, makes state predictable, and ensures the UI is always a pure function of the current state — given the same state, the UI always renders the same way.
+
+??? question "How does MVVM differ from MVP?"
+    In MVP, the Presenter holds a direct reference to a View interface and calls methods like `view.showLoading()`. In MVVM, the ViewModel has no reference to the View — it exposes observable state (StateFlow/LiveData) and the View subscribes. MVVM also survives configuration changes via ViewModelStore, whereas a Presenter is destroyed on rotation.
+
+??? question "When should you use MVI over MVVM?"
+    MVI is best for complex screens with many interacting state variables where you need traceable state transitions and time-travel debugging. For simple CRUD screens, MVVM with StateFlow is sufficient. MVVM with sealed intents and a single state class is effectively MVI anyway — the difference is how strictly you enforce the reducer pattern.
+
+!!! tip "Further Reading"
+    - [Guide to app architecture](https://developer.android.com/topic/architecture) — Official Android architecture guide
+    - [UI layer](https://developer.android.com/topic/architecture/ui-layer) — ViewModel, state holders, and UDF
+    - [Data layer](https://developer.android.com/topic/architecture/data-layer) — Repository pattern and data sources
+    - [Design patterns in Kotlin](https://refactoring.guru/design-patterns/kotlin) — Refactoring Guru's pattern catalog with Kotlin examples

@@ -150,3 +150,25 @@ Content Providers are initialized **before** `Application.onCreate()`. If your D
         }
     }
     ```
+
+---
+
+## Interview Q&A
+
+??? question "What is a Content Provider and when would you use one?"
+    A Content Provider is an Android component that provides a secure, standardized interface for sharing data between applications. Use it when you need to expose your app's data to other apps (e.g., contacts, media files) or when you need a consistent abstraction over different storage mechanisms. It is also required for features like search suggestions and widgets.
+
+??? question "What is a Content URI and how is it structured?"
+    A Content URI identifies data in a provider and consists of the scheme (`content://`), an authority (unique identifier for the provider, e.g., `com.example.myapp.provider`), and a path that identifies the data type or table (e.g., `/users`). The full URI looks like `content://com.example.myapp.provider/users`.
+
+??? question "How do you secure a Content Provider?"
+    You can secure a Content Provider by setting `android:exported="false"` to prevent external access, or by defining custom read/write permissions with `android:readPermission` and `android:writePermission`. Setting `android:protectionLevel="signature"` ensures only apps signed with the same key can access the provider.
+
+??? question "Why are Content Providers initialized before Application.onCreate()?"
+    The system creates all Content Providers before calling `Application.onCreate()` so that other apps and system components can access shared data as early as possible. This means if your DI framework initializes in `onCreate()`, the provider will not have access to injected dependencies. The workaround is to initialize DI in `attachBaseContext()`.
+
+!!! tip "Further Reading"
+    - [Content Providers - Android Developers](https://developer.android.com/guide/topics/providers/content-providers)
+    - [Creating a Content Provider - Android Developers](https://developer.android.com/guide/topics/providers/content-provider-creating)
+    - [Content Provider Basics - Android Developers](https://developer.android.com/guide/topics/providers/content-provider-basics)
+    - [Calendar Provider - Android Developers](https://developer.android.com/guide/topics/providers/calendar-provider)

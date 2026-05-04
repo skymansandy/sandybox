@@ -237,3 +237,32 @@ A default (no-arg) constructor is required because on orientation change, the sy
 ### Why Use ConstraintLayout
 
 ConstraintLayout flattens the view hierarchy, saving `measure` / `layout` / `draw` calls compared to nested layouts.
+
+---
+
+## Interview Q&A
+
+??? question "Walk through the Activity lifecycle when navigating from Activity A to Activity B and pressing back."
+    Forward: A's `onPause` is called first, then B goes through `onCreate` -> `onStart` -> `onResume`, and finally A's `onStop` is called. On back press: B's `onPause` fires, then A's `onStart` -> `onResume` (or `onCreate` depending on launch mode), and finally B's `onStop` -> `onDestroy`.
+
+??? question "What is the difference between add() and replace() in FragmentTransaction?"
+    `add()` places a new fragment on top of the existing one without removing it — the first fragment stays in the resumed state. `replace()` removes the current fragment's view (calling through `onDestroyView`) and adds the new fragment. With backstack, `replace()` keeps the old fragment's instance alive (no `onDestroy`/`onDetach`) so it can restore its view on back press.
+
+??? question "What happens during a configuration change, and how can you preserve state?"
+    The Activity is destroyed and recreated. State can be preserved via `onSaveInstanceState`/`onRestoreInstanceState` (limited to ~1 MB Bundle), ViewModel (survives config changes but not process death), or `SavedStateHandle` in ViewModel (survives both). You can also declare `android:configChanges` in the manifest to handle changes manually without recreation.
+
+??? question "What is the difference between lifecycleOwner and viewLifecycleOwner in a Fragment?"
+    `lifecycleOwner` spans the Fragment's entire lifecycle from `onAttach` to `onDetach`. `viewLifecycleOwner` spans only the view's lifecycle from `onCreateView` to `onDestroyView`. You should use `viewLifecycleOwner` when observing LiveData in fragments to prevent duplicate observers after view recreation.
+
+??? question "Explain the difference between commit() and commitAllowingStateLoss()."
+    `commit()` throws an `IllegalStateException` if called after `onSaveInstanceState`, since the system cannot guarantee the transaction state will be saved. `commitAllowingStateLoss()` skips this check, allowing the commit but risking that the transaction may be lost if the process is killed and restored.
+
+??? question "Why must Fragments have a default (no-arg) constructor?"
+    When a configuration change occurs, the system recreates fragments using the default constructor via reflection. If only a parameterized constructor exists, the system cannot instantiate the fragment and will crash. Use `arguments` Bundle or the `FragmentFactory` pattern to pass data to fragments.
+
+!!! tip "Further Reading"
+    - [Activity Lifecycle | Android Developers](https://developer.android.com/guide/components/activities/activity-lifecycle)
+    - [Fragments | Android Developers](https://developer.android.com/guide/fragments)
+    - [Handle Configuration Changes | Android Developers](https://developer.android.com/guide/topics/resources/runtime-changes)
+    - [Saving UI States | Android Developers](https://developer.android.com/topic/libraries/architecture/saving-states)
+    - [LifecycleOwner | Android Developers](https://developer.android.com/reference/androidx/lifecycle/LifecycleOwner)

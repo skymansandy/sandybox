@@ -524,3 +524,29 @@ Write a baseline profile generator test that exercises your critical UI paths (a
 
 !!! tip "Quick Win"
     Even without custom profiles, simply using Compose libraries gives you their built-in profiles. But for the best cold-start and scroll performance, generate profiles for your app's specific hot paths.
+
+---
+
+## Interview Q&A
+
+??? question "What makes a type stable in Compose, and why does it matter?"
+    A type is stable if Compose can trust its `equals()` for comparison. Primitives, `String`, enums, and data classes with all-stable properties are stable by default. Stability matters because Compose can only **skip** recomposition of a composable when all its parameters are stable and equal to their previous values. Unstable parameters force recomposition every time.
+
+??? question "How does strong skipping mode change recomposition behavior?"
+    Strong skipping mode (default since Compose compiler 1.5.4) compares unstable parameters by **referential equality** (`===`) instead of rejecting them outright. If the same object instance is passed, the composable skips. It also auto-remembers lambdas passed to composables. However, it does not help if new object instances are created on every recomposition.
+
+??? question "What is the deferred state reads optimization and why is it effective?"
+    Compose tracks state reads per rendering phase (Composition, Layout, Draw). By reading state in the latest possible phase — for example using `Modifier.graphicsLayer {}` instead of `Modifier.alpha()` — you skip unnecessary earlier phases. A state change read only in Draw triggers only a redraw, avoiding recomposition and re-layout entirely.
+
+??? question "Why should you always provide a key parameter in LazyColumn items?"
+    Without a `key`, LazyColumn identifies items by positional index. Inserting or removing an item at the top shifts all subsequent indices, causing every visible item to recompose. With a stable key (like `item.id`), Compose matches items across list changes and only recomposes items whose content actually changed.
+
+??? question "How do you diagnose unnecessary recompositions in a Compose app?"
+    Use Android Studio's **Layout Inspector** with "Show Recomposition Counts" enabled to spot composables with high recomposition and low skip counts. For deeper analysis, generate **Compose Compiler Reports** to identify non-skippable composables and unstable parameter types. Composition tracing via Perfetto provides timing data for each composable.
+
+!!! tip "Further Reading"
+    - [Jetpack Compose performance](https://developer.android.com/develop/ui/compose/performance)
+    - [Compose stability explained](https://developer.android.com/develop/ui/compose/performance/stability)
+    - [Compose phases](https://developer.android.com/develop/ui/compose/phases)
+    - [Compose Compiler Reports](https://developer.android.com/develop/ui/compose/performance/stability/diagnose)
+    - [Baseline Profiles](https://developer.android.com/topic/performance/baselineprofiles/overview)

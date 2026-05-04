@@ -537,3 +537,29 @@ tasks.register<JacocoReport>("jacocoTestReport") {
 
 !!! warning "Coverage does not equal quality"
     A test that calls a function without asserting anything gives you coverage but catches zero bugs. Measure coverage to find blind spots, not as a goal in itself.
+
+---
+
+## Interview Q&A
+
+??? question "What is the difference between a Fake, a Stub, and a Mock?"
+    A Fake is a working implementation that takes shortcuts (e.g., in-memory map instead of a database). A Stub returns predefined answers without real logic. A Mock is pre-programmed with expectations and is used to verify that specific interactions occurred. Prefer fakes for repositories and data sources; reserve mocks for verifying side effects like analytics.
+
+??? question "Why should ViewModels be independent of android.jar for testing?"
+    When a ViewModel depends on Android framework classes, it requires a device or emulator to run tests, making them slow and flaky. By injecting interfaces for Android dependencies (like Dispatchers and Context), you can run ViewModel tests on the JVM in milliseconds. This follows the dependency inversion principle and makes the ViewModel testable with fakes.
+
+??? question "What is the difference between StandardTestDispatcher and UnconfinedTestDispatcher?"
+    `StandardTestDispatcher` pauses coroutine execution until you explicitly call `advanceUntilIdle()` or `advanceTimeBy()`, giving precise control over timing. `UnconfinedTestDispatcher` runs coroutines eagerly and immediately, which is simpler but offers less control. Use Standard when testing timing-dependent logic and Unconfined for straightforward tests.
+
+??? question "How do you test Kotlin Flows in unit tests?"
+    Use the Turbine library, which provides a `test {}` extension on Flow. Inside the test block, you call `awaitItem()` to assert each emitted value, `awaitError()` for errors, and `cancelAndConsumeRemainingEvents()` to clean up. Turbine handles coroutine timing and makes Flow testing concise and readable.
+
+??? question "What is Robolectric and when should you use it instead of instrumented tests?"
+    Robolectric provides shadow implementations of Android framework classes, allowing you to run Android tests on the JVM without a device or emulator. Use it for testing Activities, Fragments, and Android APIs when you do not need real hardware (camera, sensors). Use instrumented tests when you need real device behavior or visual UI validation.
+
+!!! tip "Further Reading"
+    - [Test apps on Android - Android Developers](https://developer.android.com/training/testing)
+    - [Testing Coroutines - Android Developers](https://developer.android.com/kotlin/coroutines/test)
+    - [MockK - Official Docs](https://mockk.io/)
+    - [Turbine - GitHub](https://github.com/cashapp/turbine)
+    - [Robolectric - Official Docs](https://robolectric.org/)

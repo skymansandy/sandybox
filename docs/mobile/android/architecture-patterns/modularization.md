@@ -507,3 +507,28 @@ dot -Tpng build/reports/dependency-graph/project.dot -o module-graph.png
     - **`api` everywhere**: defeats the purpose. Default to `implementation`
     - **Shared God module**: a `:common` module that everything depends on becomes a bottleneck — changes to it recompile everything. Keep it minimal
     - **Feature modules depending on each other**: breaks isolation. Extract shared logic to `:core`
+
+---
+
+## Interview Q&A
+
+??? question "Why should you modularize an Android app?"
+    Modularization improves build speed (only changed modules recompile), enforces architectural boundaries at compile time, enables team scalability with clear code ownership, and improves testability by allowing modules to be tested in isolation. In large codebases (500K+ LOC), it can reduce rebuild times from minutes to seconds.
+
+??? question "What is the difference between api and implementation dependency scope in Gradle?"
+    `implementation` hides the dependency from consumers of your module — changes to it only recompile the declaring module. `api` exposes the dependency transitively — changes recompile both the declaring module and all its consumers. Default to `implementation` and only use `api` when your module's public API exposes types from the dependency.
+
+??? question "How do feature modules navigate to each other without direct dependencies?"
+    Define a `Navigator` interface or route constants in a shared `:core:navigation` module. Feature modules depend on that shared module, not on each other. The `:app` module (which knows all features) provides the navigation implementation. This keeps features decoupled and independently compilable.
+
+??? question "What is a convention plugin and why use it?"
+    A convention plugin is a Gradle plugin defined in a `build-logic` included build that encapsulates shared build configuration (compile SDK, min SDK, Compose setup, common dependencies). Instead of duplicating `build.gradle.kts` config across 30+ modules, each module applies a single plugin ID like `myapp.android.feature` to get all shared settings.
+
+??? question "Why should the domain layer be a pure Kotlin/JVM module?"
+    A pure Kotlin/JVM module compiles faster (no AAPT, no resource merging), can be shared in Kotlin Multiplatform projects, and enforces that business logic has zero Android framework dependencies. This makes domain logic testable with plain JUnit — no Robolectric or instrumentation tests needed.
+
+!!! tip "Further Reading"
+    - [Guide to Android app modularization](https://developer.android.com/topic/modularization) — Official modularization guide
+    - [Now in Android app](https://github.com/android/nowinandroid) — Google's reference multi-module architecture sample
+    - [Gradle convention plugins](https://docs.gradle.org/current/samples/sample_convention_plugins.html) — Gradle docs on convention plugins
+    - [Dependency management in multi-module projects](https://developer.android.com/build/dependencies) — Official guide on api vs implementation

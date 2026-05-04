@@ -423,3 +423,31 @@ val fileDispatcher = Dispatchers.IO.limitedParallelism(2)
 
 !!! tip "Recommendation"
     Use coroutines for all new code. The only exception is low-level framework code or `Application.onCreate` where coroutine initialization overhead matters.
+
+---
+
+## Interview Q&A
+
+??? question "What is the difference between a process and a thread?"
+    A process is a running instance of an application with its own memory space and resources. A thread is a unit of execution within a process — multiple threads share the same memory space but are scheduled independently by the OS.
+
+??? question "How does the Handler-Looper mechanism work in Android?"
+    Each thread can have one Looper (stored via ThreadLocal) that runs an infinite loop, pulling Messages from its MessageQueue. A Handler posts Messages or Runnables to a specific Looper's queue. When the Looper dequeues a message, it dispatches it to the Handler's `handleMessage()` or runs the Runnable. The main thread gets a Looper by default; background threads need `Looper.prepare()`.
+
+??? question "What is the difference between volatile, synchronized, and AtomicInteger?"
+    `@Volatile` guarantees visibility (writes go to main memory) but not atomicity. `synchronized` provides both visibility and mutual exclusion — only one thread can enter the block at a time. `AtomicInteger` uses lock-free CAS (Compare-And-Swap) instructions for single-variable atomic operations, which is more performant than `synchronized` for simple counters and flags.
+
+??? question "How do you prevent deadlocks?"
+    Always acquire locks in a consistent global order, use `tryLock()` with timeouts instead of blocking forever, minimize lock scope, and prefer higher-level abstractions like coroutines and Flow that avoid explicit locking altogether.
+
+??? question "What is Dispatchers.IO.limitedParallelism(n) and when would you use it?"
+    It creates a private view of the IO dispatcher limited to `n` concurrent coroutines. Use it when you have a throttled resource like a database connection pool — it prevents those operations from consuming all 64 IO threads while still sharing the underlying thread pool.
+
+??? question "Why was AsyncTask deprecated and what replaced it?"
+    AsyncTask leaked Activity references, had no lifecycle awareness, confusing error handling, and a serial executor bottleneck. Kotlin coroutines with structured concurrency (`viewModelScope`, `lifecycleScope`) replaced it, providing automatic cancellation, lifecycle awareness, and simpler error handling.
+
+!!! tip "Further Reading"
+    - [Processes and threads overview](https://developer.android.com/guide/components/processes-and-threads) — Official Android guide
+    - [Kotlin coroutines on Android](https://developer.android.com/kotlin/coroutines) — Official coroutines guide
+    - [Threading in CoroutineContext](https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html) — Kotlin docs on dispatchers
+    - [Improve app performance with Kotlin coroutines](https://developer.android.com/kotlin/coroutines/coroutines-adv) — Advanced coroutines patterns
