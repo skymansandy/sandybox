@@ -81,6 +81,8 @@ nav:
         - Notifications & FCM: mobile/android/system-services/notifications.md
         - WorkManager: mobile/android/system-services/workmanager.md
         - Intents & IPC: mobile/android/system-services/intents-ipc.md
+        - Deep Linking: mobile/android/system-services/deep-linking.md
+        - AIDL: mobile/android/system-services/aidl.md
       - Miscellaneous:
         - Android Essentials: mobile/android/miscellaneous/android-essentials.md
         - Unit Testing: mobile/android/miscellaneous/unit-testing.md
