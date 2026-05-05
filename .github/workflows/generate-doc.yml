@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       concept:
-        description: "Concept to document"
+        description: "Concept(s) to document (comma-separated for multiple)"
         required: true
         type: string
       section:
@@ -53,22 +53,25 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           claude --dangerously-skip-permissions --model claude-opus-4-6 -p "$(cat <<'PROMPT'
-          You are adding a new knowledge base article to a MkDocs site.
+          You are adding new knowledge base articles to a MkDocs site.
 
-          CONCEPT: ${{ github.event.inputs.concept }}
+          CONCEPTS: ${{ github.event.inputs.concept }}
           TARGET SECTION: ${{ github.event.inputs.section }}
+
+          CONCEPTS may be comma-separated (e.g. "Gradle & Build System, App Security"). Generate docs for ALL concepts in a single pass.
 
           INSTRUCTIONS:
           1. Read CLAUDE.md for content philosophy, tone, and style guidelines. Follow them strictly.
           2. Read mkdocs.yml to understand the current nav structure and find where the target section lives.
           3. Read 1-2 existing docs in that section to match the writing style and conventions.
-          4. If the CONCEPT is broad or vague (e.g. "Android Networking", "System Design"), think like a principal engineer and split it into logical sub-topics. Create:
-             - A wiring page (overview + links to each sub-topic in learning order)
-             - Individual sub-topic docs, each self-contained
-          5. For focused concepts, create a single doc.
-          6. Determine appropriate filenames (lowercase, hyphenated, e.g. "coroutines.md").
-          7. Determine the correct subdirectory under docs/ based on the section path.
-          8. Create the markdown file(s) with:
+          4. For EACH concept:
+             a. If the concept is broad or vague (e.g. "Android Networking", "System Design"), think like a principal engineer and split it into logical sub-topics. Create:
+                - A wiring page (overview + links to each sub-topic in learning order)
+                - Individual sub-topic docs, each self-contained
+             b. For focused concepts, create a single doc.
+          5. Determine appropriate filenames (lowercase, hyphenated, e.g. "coroutines.md").
+          6. Determine the correct subdirectory under docs/ based on the section path.
+          7. Create the markdown file(s) with:
              - H1 title matching the concept
              - Well-structured sections with H2/H3 headings
              - Use admonitions (!!! note, !!! tip, !!! warning) where helpful
@@ -76,9 +79,9 @@ jobs:
              - Use fenced code blocks with language tags for code examples
              - Use tabbed content (=== "Tab") when comparing alternatives
              - Make it comprehensive but concise — aim for a reference doc
-          9. Update mkdocs.yml nav to include the new file(s) in the correct section.
-          10. If TARGET SECTION is "auto", determine the best section from the concept context.
-          11. Do NOT modify any existing files other than mkdocs.yml.
+          8. Update mkdocs.yml nav to include ALL new files in the correct section(s).
+          9. If TARGET SECTION is "auto", determine the best section from the concept context.
+          10. Do NOT modify any existing files other than mkdocs.yml.
 
           CONVENTIONS (from existing docs):
           - Files use kebab-case: e.g. solid-principles.md, jetpack-compose.md
@@ -101,6 +104,7 @@ jobs:
           git add docs/ mkdocs.yml
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "docs: add ${{ github.event.inputs.concept }}"
+          git pull --rebase origin main
           git push
 
       - name: Build site
@@ -120,25 +124,70 @@ jobs:
         env:
           SITE_URL: ${{ steps.deploy.outputs.page_url }}
         run: |
-          NEW_FILES=$(git diff --name-only HEAD~1 -- docs/ | grep '\.md$')
-          LINKS=""
-          while IFS= read -r file; do
-            [ -z "$file" ] && continue
-            PAGE_PATH=$(echo "$file" | sed 's|^docs/||; s|\.md$|/|; s|index/$||')
-            PAGE_NAME=$(echo "$file" | sed 's|.*/||; s|\.md$||; s|-| |g')
-            LINKS="${LINKS}• <${SITE_URL}${PAGE_PATH}|${PAGE_NAME}>\n"
-          done <<< "$NEW_FILES"
-          # Escape for GitHub output
-          echo "links<<LINKS_EOF" >> "$GITHUB_OUTPUT"
-          echo -e "$LINKS" >> "$GITHUB_OUTPUT"
-          echo "LINKS_EOF" >> "$GITHUB_OUTPUT"
+          pip install pyyaml
+          python3 <<'PYEOF'
+          import yaml, os, subprocess
+
+          site_url = os.environ["SITE_URL"].rstrip("/") + "/"
+          new_files = subprocess.check_output(
+              ["git", "diff", "--name-only", "HEAD~1", "--", "docs/"],
+              text=True
+          ).strip().split("\n")
+          new_files = {f.replace("docs/", "", 1) for f in new_files if f.endswith(".md")}
+
+          with open("mkdocs.yml") as f:
+              nav = yaml.safe_load(f).get("nav", [])
+
+          lines = []
+
+          def walk(items, depth=0):
+              for item in items:
+                  if isinstance(item, dict):
+                      for label, value in item.items():
+                          if isinstance(value, str) and value in new_files:
+                              page_path = value.replace(".md", "/").replace("index/", "")
+                              indent = "    " * depth
+                              lines.append(f"{indent}• <{site_url}{page_path}|{label}>")
+                          elif isinstance(value, list):
+                              has_new = any_new(value)
+                              if has_new:
+                                  indent = "    " * depth
+                                  lines.append(f"{indent}*{label}*")
+                                  walk(value, depth + 1)
+                  elif isinstance(item, str) and item in new_files:
+                      page_path = item.replace(".md", "/").replace("index/", "")
+                      indent = "    " * depth
+                      lines.append(f"{indent}• <{site_url}{page_path}|{item}>")
+
+          def any_new(items):
+              for item in items:
+                  if isinstance(item, dict):
+                      for value in item.values():
+                          if isinstance(value, str) and value in new_files:
+                              return True
+                          if isinstance(value, list) and any_new(value):
+                              return True
+                  elif isinstance(item, str) and item in new_files:
+                      return True
+              return False
+
+          walk(nav)
+          result = "\n".join(lines)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"links<<LINKS_EOF\n{result}\nLINKS_EOF\n")
+          PYEOF
 
       - name: Notify Slack on success
         if: success()
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
-          MSG="Doc generated for *${{ github.event.inputs.concept }}*!\n\n${{ steps.pages.outputs.links }}"
+          LINKS=$(cat <<'LINKS_END'
+          ${{ steps.pages.outputs.links }}
+          LINKS_END
+          )
+          MSG=$(printf "Docs generated for *${{ github.event.inputs.concept }}*!\n\n%s" "$LINKS")
           PAYLOAD=$(jq -n \
             --arg channel "${{ github.event.inputs.slack_channel }}" \
             --arg user "${{ github.event.inputs.slack_user }}" \

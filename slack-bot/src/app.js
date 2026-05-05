@@ -72,59 +72,54 @@ app.command("/sandybox", async ({ command, ack, respond }) => {
     return;
   }
 
-  // Support comma-separated topics: "Coroutines, Flow, Channels in kotlin"
-  const { concept: rawConcept, section } = parseMessage(command.text);
+  const { concept, section } = parseMessage(command.text);
 
-  if (!rawConcept) {
+  if (!concept) {
     await respond("Usage: `/sandybox <concept>[, concept2, ...] [in <section>]`");
     return;
   }
 
-  const concepts = rawConcept.split(",").map((c) => c.trim()).filter(Boolean);
   const sectionLabel = section !== "auto" ? ` in *${section}*` : "";
-  const conceptList = concepts.map((c) => `*${c}*`).join(", ");
 
-  await respond(`Got it! Generating ${concepts.length} doc(s) for ${conceptList}${sectionLabel}. I'll post links when ready.`);
+  await respond(`Got it! Generating docs for *${concept}*${sectionLabel}. I'll post links when ready.`);
 
-  for (const concept of concepts) {
-    try {
-      const beforeTime = new Date().toISOString();
+  try {
+    const beforeTime = new Date().toISOString();
 
-      await octokit.actions.createWorkflowDispatch({
+    await octokit.actions.createWorkflowDispatch({
+      owner: OWNER,
+      repo: REPO,
+      workflow_id: WORKFLOW_FILE,
+      ref: DEFAULT_REF,
+      inputs: {
+        concept,
+        section,
+        slack_channel: command.channel_id,
+        slack_user: command.user_id,
+      },
+    });
+
+    // Poll for the newly created run (dispatch API doesn't return run ID)
+    let runUrl = `https://github.com/${OWNER}/${REPO}/actions`;
+    for (let i = 0; i < 5; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const { data } = await octokit.actions.listWorkflowRuns({
         owner: OWNER,
         repo: REPO,
         workflow_id: WORKFLOW_FILE,
-        ref: DEFAULT_REF,
-        inputs: {
-          concept,
-          section,
-          slack_channel: command.channel_id,
-          slack_user: command.user_id,
-        },
+        created: `>=${beforeTime}`,
+        per_page: 1,
       });
-
-      // Poll for the newly created run (dispatch API doesn't return run ID)
-      let runUrl = `https://github.com/${OWNER}/${REPO}/actions`;
-      for (let i = 0; i < 5; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const { data } = await octokit.actions.listWorkflowRuns({
-          owner: OWNER,
-          repo: REPO,
-          workflow_id: WORKFLOW_FILE,
-          created: `>=${beforeTime}`,
-          per_page: 1,
-        });
-        if (data.workflow_runs.length > 0) {
-          runUrl = data.workflow_runs[0].html_url;
-          break;
-        }
+      if (data.workflow_runs.length > 0) {
+        runUrl = data.workflow_runs[0].html_url;
+        break;
       }
-
-      await respond(`Workflow started for *${concept}*: ${runUrl}`);
-    } catch (err) {
-      console.error(`Failed to trigger workflow for ${concept}:`, err.message);
-      await respond(`Failed to trigger doc generation for *${concept}*: ${err.message}`);
     }
+
+    await respond(`Workflow started: ${runUrl}`);
+  } catch (err) {
+    console.error("Failed to trigger workflow:", err.message);
+    await respond(`Failed to trigger doc generation: ${err.message}`);
   }
 });
 
