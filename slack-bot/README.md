@@ -74,9 +74,9 @@ npm install
 npm start
 ```
 
-### Deployment (Railway)
+### Deployment (Fly.io)
 
-1. Connect this repo to [Railway](https://railway.app)
-2. Set the root directory to `slack-bot/`
-3. Add the env vars from `.env.example`
-4. Railway auto-deploys on push
+1. Install the Fly CLI: `brew install flyctl`
+2. Run `fly auth login` and `fly launch` from the `slack-bot/` directory
+3. Set secrets: `fly secrets set SLACK_BOT_TOKEN=xoxb-... SLACK_SIGNING_SECRET=... SLACK_APP_TOKEN=xapp-... GITHUB_TOKEN=ghp_...`
+4. Deploy: `fly deploy`

@@ -9,7 +9,10 @@ const app = new App({
   appToken: process.env.SLACK_APP_TOKEN,
 });
 
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+const octokit = new Octokit({
+  auth: process.env.GITHUB_TOKEN,
+  headers: { "X-GitHub-Api-Version": "2022-11-28" },
+});
 
 const OWNER = "skymansandy";
 const REPO = "sandybox";
