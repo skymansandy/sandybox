@@ -109,6 +109,9 @@ nav:
         - KMP: programming/languages/kotlin/kmp.md
     - Design Patterns:
       - programming/design-patterns/index.md
+      - Creational Patterns: programming/design-patterns/creational-patterns.md
+      - Structural Patterns: programming/design-patterns/structural-patterns.md
+      - Behavioral Patterns: programming/design-patterns/behavioral-patterns.md
     - Data Structures & Algorithms:
       - programming/dsa/index.md
 
@@ -120,6 +123,7 @@ nav:
       - infra/devops/index.md
     - Databases:
       - infra/databases/index.md
+      - SQL vs NoSQL: infra/databases/sql-vs-nosql.md
 
   - Science:
     - science/index.md
