@@ -137,6 +137,24 @@ nav:
       - infra/networking/index.md
     - DevOps:
       - infra/devops/index.md
+      - Docker:
+        - infra/devops/docker/index.md
+        - Docker Fundamentals: infra/devops/docker/fundamentals.md
+        - Networking & Storage: infra/devops/docker/networking-storage.md
+        - Docker Compose: infra/devops/docker/compose.md
+        - Best Practices: infra/devops/docker/best-practices.md
+      - Kubernetes:
+        - infra/devops/kubernetes/index.md
+        - Cluster Architecture: infra/devops/kubernetes/architecture.md
+        - Workloads & Scheduling: infra/devops/kubernetes/workloads.md
+        - Networking & Services: infra/devops/kubernetes/networking.md
+        - Storage & Configuration: infra/devops/kubernetes/storage-config.md
+        - Scaling & Operations: infra/devops/kubernetes/scaling-operations.md
+      - CI/CD Pipelines:
+        - infra/devops/ci-cd/index.md
+        - Continuous Integration: infra/devops/ci-cd/continuous-integration.md
+        - Continuous Delivery & Deployment: infra/devops/ci-cd/continuous-delivery.md
+        - Pipeline Design Patterns: infra/devops/ci-cd/pipeline-design.md
     - Databases:
       - infra/databases/index.md
       - SQL vs NoSQL: infra/databases/sql-vs-nosql.md
