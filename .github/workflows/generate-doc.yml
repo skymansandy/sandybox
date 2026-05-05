@@ -26,7 +26,6 @@ concurrency:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
   generate:
@@ -34,46 +33,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install mkdocs
-        run: pip install mkdocs-material
+      - name: Install tools
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          pip install mkdocs-material
 
       - name: Generate doc with Claude
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            You are adding a new knowledge base article to a MkDocs site.
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          claude --dangerously-skip-permissions -p "$(cat <<'PROMPT'
+          You are adding a new knowledge base article to a MkDocs site.
 
-            CONCEPT: ${{ github.event.inputs.concept }}
-            TARGET SECTION: ${{ github.event.inputs.section }}
+          CONCEPT: ${{ github.event.inputs.concept }}
+          TARGET SECTION: ${{ github.event.inputs.section }}
 
-            INSTRUCTIONS:
-            1. Read mkdocs.yml to understand the current nav structure and find where the target section lives.
-            2. Read 1-2 existing docs in that section to match the writing style and conventions.
-            3. Determine an appropriate filename (lowercase, hyphenated, e.g. "coroutines.md").
-            4. Determine the correct subdirectory under docs/ based on the section path.
-            5. Create the markdown file with:
-               - H1 title matching the concept
-               - Well-structured sections with H2/H3 headings
-               - Use admonitions (!!! note, !!! tip, !!! warning) where helpful
-               - Use mermaid diagrams for architectural/flow concepts
-               - Use fenced code blocks with language tags for code examples
-               - Use tabbed content (=== "Tab") when comparing alternatives
-               - Make it comprehensive but concise — aim for a reference doc
-            6. Update mkdocs.yml nav to include the new file in the correct section.
-            7. If TARGET SECTION is "auto", determine the best section from the concept context.
-            8. Do NOT modify any existing files other than mkdocs.yml.
+          INSTRUCTIONS:
+          1. Read mkdocs.yml to understand the current nav structure and find where the target section lives.
+          2. Read 1-2 existing docs in that section to match the writing style and conventions.
+          3. Determine an appropriate filename (lowercase, hyphenated, e.g. "coroutines.md").
+          4. Determine the correct subdirectory under docs/ based on the section path.
+          5. Create the markdown file with:
+             - H1 title matching the concept
+             - Well-structured sections with H2/H3 headings
+             - Use admonitions (!!! note, !!! tip, !!! warning) where helpful
+             - Use mermaid diagrams for architectural/flow concepts
+             - Use fenced code blocks with language tags for code examples
+             - Use tabbed content (=== "Tab") when comparing alternatives
+             - Make it comprehensive but concise — aim for a reference doc
+          6. Update mkdocs.yml nav to include the new file in the correct section.
+          7. If TARGET SECTION is "auto", determine the best section from the concept context.
+          8. Do NOT modify any existing files other than mkdocs.yml.
 
-            CONVENTIONS (from existing docs):
-            - Files use kebab-case: e.g. solid-principles.md, jetpack-compose.md
-            - Nav labels are human-readable: e.g. "SOLID Principles", "Jetpack Compose"
-            - Content uses H1 for page title, H2 for major sections, H3 for subsections
-            - Mermaid diagrams use ```mermaid fenced blocks
-          allowed_tools: "Edit,Write,Read,Glob,Grep"
+          CONVENTIONS (from existing docs):
+          - Files use kebab-case: e.g. solid-principles.md, jetpack-compose.md
+          - Nav labels are human-readable: e.g. "SOLID Principles", "Jetpack Compose"
+          - Content uses H1 for page title, H2 for major sections, H3 for subsections
+          - Mermaid diagrams use ```mermaid fenced blocks
+          PROMPT
+          )"
 
       - name: Validate build
         run: mkdocs build --strict
