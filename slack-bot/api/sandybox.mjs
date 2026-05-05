@@ -36,19 +36,21 @@ function parseMessage(text) {
   return { concept: cleaned, section: "auto" };
 }
 
-async function sendDelayedResponse(responseUrl, text) {
-  try {
-    await fetch(responseUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ response_type: "ephemeral", text }),
-    });
-  } catch (err) {
-    console.error("Failed to send delayed response:", err.message);
-  }
+async function slackPost(channel, text, threadTs) {
+  const body = { channel, text };
+  if (threadTs) body.thread_ts = threadTs;
+  const resp = await fetch("https://slack.com/api/chat.postMessage", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  return resp.json();
 }
 
-async function triggerWorkflow({ concept, section, channelId, userId, responseUrl }) {
+async function triggerWorkflow({ concept, section, channelId, userId, threadTs }) {
   try {
     console.log("Triggering workflow for:", concept, "in", section);
 
@@ -69,6 +71,7 @@ async function triggerWorkflow({ concept, section, channelId, userId, responseUr
         section,
         slack_channel: channelId,
         slack_user: userId,
+        slack_thread_ts: threadTs,
       },
     });
 
@@ -91,11 +94,11 @@ async function triggerWorkflow({ concept, section, channelId, userId, responseUr
       }
     }
 
-    console.log("Sending delayed response with run URL:", runUrl);
-    await sendDelayedResponse(responseUrl, `Workflow started: ${runUrl}`);
+    console.log("Sending threaded reply with run URL:", runUrl);
+    await slackPost(channelId, `Workflow started: ${runUrl}`, threadTs);
   } catch (err) {
     console.error("Failed to trigger workflow:", err.message);
-    await sendDelayedResponse(responseUrl, `Failed to trigger doc generation: ${err.message}`);
+    await slackPost(channelId, `Failed to trigger doc generation: ${err.message}`, threadTs);
   }
 }
 
@@ -110,7 +113,6 @@ export default async function handler(req, res) {
     const channelId = body.channel_id;
     const userId = body.user_id;
     const text = body.text || "";
-    const responseUrl = body.response_url;
 
     // Channel restriction
     const allowedChannel = process.env.SANDYBOX_CHANNEL_ID;
@@ -132,15 +134,25 @@ export default async function handler(req, res) {
 
     const sectionLabel = section !== "auto" ? ` in *${section}*` : "";
 
-    // Use waitUntil to keep the function alive for the async workflow trigger
-    // This lets us respond to Slack immediately while the background work continues
-    waitUntil(triggerWorkflow({ concept, section, channelId, userId, responseUrl }));
+    // Post the user's command as a visible message to anchor the thread
+    const parentMsg = await slackPost(
+      channelId,
+      `<@${userId}> used \`/sandybox ${text}\``,
+    );
+    const threadTs = parentMsg.ts;
 
-    // Respond immediately to Slack (must be within 3s)
-    return res.json({
-      response_type: "ephemeral",
-      text: `Got it! Generating docs for *${concept}*${sectionLabel}. I'll post the workflow link shortly.`,
-    });
+    // Post the acknowledgment as the first threaded reply
+    await slackPost(
+      channelId,
+      `Got it! Generating docs for *${concept}*${sectionLabel}. I'll post the workflow link shortly.`,
+      threadTs,
+    );
+
+    // Trigger workflow in background, threaded under the parent message
+    waitUntil(triggerWorkflow({ concept, section, channelId, userId, threadTs }));
+
+    // Acknowledge the slash command silently — bot already posted the visible messages
+    return res.status(200).send("");
   } catch (err) {
     console.error("Handler error:", err);
     if (!res.headersSent) {

@@ -19,6 +19,10 @@ on:
         description: "Slack user ID for ephemeral reply"
         required: true
         type: string
+      slack_thread_ts:
+        description: "Slack thread timestamp for threaded replies"
+        required: false
+        type: string
 
 concurrency:
   group: doc-generation
@@ -196,13 +200,13 @@ jobs:
           echo "=== End message ==="
           PAYLOAD=$(jq -n \
             --arg channel "${{ github.event.inputs.slack_channel }}" \
-            --arg user "${{ github.event.inputs.slack_user }}" \
             --arg text "$MSG" \
-            '{channel: $channel, user: $user, text: $text}')
+            --arg thread_ts "${{ github.event.inputs.slack_thread_ts }}" \
+            '{channel: $channel, text: $text, thread_ts: $thread_ts}')
           echo "=== Payload ==="
           echo "$PAYLOAD"
           echo "=== End payload ==="
-          RESPONSE=$(curl -s -X POST https://slack.com/api/chat.postEphemeral \
+          RESPONSE=$(curl -s -X POST https://slack.com/api/chat.postMessage \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-type: application/json" \
             --data "$PAYLOAD")
@@ -217,13 +221,13 @@ jobs:
         run: |
           PAYLOAD=$(jq -n \
             --arg channel "${{ github.event.inputs.slack_channel }}" \
-            --arg user "${{ github.event.inputs.slack_user }}" \
             --arg text "Failed to generate doc for *${{ github.event.inputs.concept }}*. Check the <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|workflow run> for details." \
-            '{channel: $channel, user: $user, text: $text}')
+            --arg thread_ts "${{ github.event.inputs.slack_thread_ts }}" \
+            '{channel: $channel, text: $text, thread_ts: $thread_ts}')
           echo "=== Payload ==="
           echo "$PAYLOAD"
           echo "=== End payload ==="
-          RESPONSE=$(curl -s -X POST https://slack.com/api/chat.postEphemeral \
+          RESPONSE=$(curl -s -X POST https://slack.com/api/chat.postMessage \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-type: application/json" \
             --data "$PAYLOAD")
