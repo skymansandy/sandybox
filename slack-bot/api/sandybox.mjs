@@ -50,8 +50,23 @@ async function slackPost(channel, text, threadTs) {
   return resp.json();
 }
 
-async function triggerWorkflow({ concept, section, channelId, userId, threadTs }) {
+async function backgroundWork({ concept, section, channelId, userId, text }) {
   try {
+    const sectionLabel = section !== "auto" ? ` in *${section}*` : "";
+
+    // Post parent message and get thread ts
+    const parentMsg = await slackPost(
+      channelId,
+      `<@${userId}> used \`/sandybox ${text}\``,
+    );
+    const threadTs = parentMsg.ts;
+
+    await slackPost(
+      channelId,
+      `Got it! Generating docs for *${concept}*${sectionLabel}. I'll post the workflow link shortly.`,
+      threadTs,
+    );
+
     console.log("Triggering workflow for:", concept, "in", section);
 
     const octokit = new Octokit({
@@ -98,7 +113,7 @@ async function triggerWorkflow({ concept, section, channelId, userId, threadTs }
     await slackPost(channelId, `Workflow started: ${runUrl}`, threadTs);
   } catch (err) {
     console.error("Failed to trigger workflow:", err.message);
-    await slackPost(channelId, `Failed to trigger doc generation: ${err.message}`, threadTs);
+    await slackPost(channelId, `Failed to trigger doc generation: ${err.message}`);
   }
 }
 
@@ -132,26 +147,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const sectionLabel = section !== "auto" ? ` in *${section}*` : "";
+    // Do all Slack posting and workflow triggering in the background
+    waitUntil(backgroundWork({ concept, section, channelId, userId, text }));
 
-    // Post the user's command as a visible message to anchor the thread
-    const parentMsg = await slackPost(
-      channelId,
-      `<@${userId}> used \`/sandybox ${text}\``,
-    );
-    const threadTs = parentMsg.ts;
-
-    // Post the acknowledgment as the first threaded reply
-    await slackPost(
-      channelId,
-      `Got it! Generating docs for *${concept}*${sectionLabel}. I'll post the workflow link shortly.`,
-      threadTs,
-    );
-
-    // Trigger workflow in background, threaded under the parent message
-    waitUntil(triggerWorkflow({ concept, section, channelId, userId, threadTs }));
-
-    // Acknowledge the slash command silently — bot already posted the visible messages
+    // Respond immediately to Slack within 3s
     return res.status(200).send("");
   } catch (err) {
     console.error("Handler error:", err);
