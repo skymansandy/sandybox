@@ -167,6 +167,20 @@ nav:
       - science/physics/index.md
     - Astronomy:
       - science/astronomy/index.md
+      - Solar System:
+        - science/astronomy/solar-system/index.md
+        - The Sun: science/astronomy/solar-system/the-sun.md
+        - Inner Planets: science/astronomy/solar-system/inner-planets.md
+        - Outer Planets: science/astronomy/solar-system/outer-planets.md
+        - Dwarf Planets & Small Bodies: science/astronomy/solar-system/dwarf-planets-and-small-bodies.md
+      - Black Holes: science/astronomy/black-holes.md
+    - Chemistry:
+      - science/chemistry/index.md
+      - Atomic Structure: science/chemistry/atomic-structure.md
+      - Periodic Table: science/chemistry/periodic-table.md
+      - Chemical Bonding: science/chemistry/chemical-bonding.md
+      - Reactions & Equations: science/chemistry/reactions-and-equations.md
+      - States of Matter: science/chemistry/states-of-matter.md
 
   - Tools:
     - tools/index.md
