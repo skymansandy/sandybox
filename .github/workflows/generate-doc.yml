@@ -26,6 +26,8 @@ concurrency:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   generate:
@@ -50,18 +52,23 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
-          claude --dangerously-skip-permissions -p "$(cat <<'PROMPT'
+          claude --dangerously-skip-permissions --model claude-opus-4-6 -p "$(cat <<'PROMPT'
           You are adding a new knowledge base article to a MkDocs site.
 
           CONCEPT: ${{ github.event.inputs.concept }}
           TARGET SECTION: ${{ github.event.inputs.section }}
 
           INSTRUCTIONS:
-          1. Read mkdocs.yml to understand the current nav structure and find where the target section lives.
-          2. Read 1-2 existing docs in that section to match the writing style and conventions.
-          3. Determine an appropriate filename (lowercase, hyphenated, e.g. "coroutines.md").
-          4. Determine the correct subdirectory under docs/ based on the section path.
-          5. Create the markdown file with:
+          1. Read CLAUDE.md for content philosophy, tone, and style guidelines. Follow them strictly.
+          2. Read mkdocs.yml to understand the current nav structure and find where the target section lives.
+          3. Read 1-2 existing docs in that section to match the writing style and conventions.
+          4. If the CONCEPT is broad or vague (e.g. "Android Networking", "System Design"), think like a principal engineer and split it into logical sub-topics. Create:
+             - A wiring page (overview + links to each sub-topic in learning order)
+             - Individual sub-topic docs, each self-contained
+          5. For focused concepts, create a single doc.
+          6. Determine appropriate filenames (lowercase, hyphenated, e.g. "coroutines.md").
+          7. Determine the correct subdirectory under docs/ based on the section path.
+          8. Create the markdown file(s) with:
              - H1 title matching the concept
              - Well-structured sections with H2/H3 headings
              - Use admonitions (!!! note, !!! tip, !!! warning) where helpful
@@ -69,9 +76,9 @@ jobs:
              - Use fenced code blocks with language tags for code examples
              - Use tabbed content (=== "Tab") when comparing alternatives
              - Make it comprehensive but concise — aim for a reference doc
-          6. Update mkdocs.yml nav to include the new file in the correct section.
-          7. If TARGET SECTION is "auto", determine the best section from the concept context.
-          8. Do NOT modify any existing files other than mkdocs.yml.
+          9. Update mkdocs.yml nav to include the new file(s) in the correct section.
+          10. If TARGET SECTION is "auto", determine the best section from the concept context.
+          11. Do NOT modify any existing files other than mkdocs.yml.
 
           CONVENTIONS (from existing docs):
           - Files use kebab-case: e.g. solid-principles.md, jetpack-compose.md
@@ -82,7 +89,7 @@ jobs:
           )"
 
       - name: Validate build
-        run: mkdocs build --strict
+        run: mkdocs build --strict && rm -rf site/
 
       - name: Commit and push
         env:
@@ -96,44 +103,63 @@ jobs:
           git commit -m "docs: add ${{ github.event.inputs.concept }}"
           git push
 
-      - name: Get new page path
-        id: page
+      - name: Build site
+        run: mkdocs build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Build page links
+        id: pages
+        env:
+          SITE_URL: ${{ steps.deploy.outputs.page_url }}
         run: |
-          NEW_FILE=$(git diff --name-only HEAD~1 -- docs/ | head -1)
-          PAGE_PATH=$(echo "$NEW_FILE" | sed 's|^docs/||; s|\.md$|/|; s|index/$||')
-          echo "path=$PAGE_PATH" >> "$GITHUB_OUTPUT"
-          echo "file=$NEW_FILE" >> "$GITHUB_OUTPUT"
+          NEW_FILES=$(git diff --name-only HEAD~1 -- docs/ | grep '\.md$')
+          LINKS=""
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            PAGE_PATH=$(echo "$file" | sed 's|^docs/||; s|\.md$|/|; s|index/$||')
+            PAGE_NAME=$(echo "$file" | sed 's|.*/||; s|\.md$||; s|-| |g')
+            LINKS="${LINKS}• <${SITE_URL}${PAGE_PATH}|${PAGE_NAME}>\n"
+          done <<< "$NEW_FILES"
+          # Escape for GitHub output
+          echo "links<<LINKS_EOF" >> "$GITHUB_OUTPUT"
+          echo -e "$LINKS" >> "$GITHUB_OUTPUT"
+          echo "LINKS_EOF" >> "$GITHUB_OUTPUT"
 
       - name: Notify Slack on success
         if: success()
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
+          MSG="Doc generated for *${{ github.event.inputs.concept }}*!\n\n${{ steps.pages.outputs.links }}"
+          PAYLOAD=$(jq -n \
+            --arg channel "${{ github.event.inputs.slack_channel }}" \
+            --arg user "${{ github.event.inputs.slack_user }}" \
+            --arg text "$MSG" \
+            '{channel: $channel, user: $user, text: $text}')
           curl -s -X POST https://slack.com/api/chat.postEphemeral \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-type: application/json" \
-            --data "$(cat <<EOF
-          {
-            "channel": "${{ github.event.inputs.slack_channel }}",
-            "user": "${{ github.event.inputs.slack_user }}",
-            "text": "Doc generated for *${{ github.event.inputs.concept }}*! :page_facing_up:\nPath: \`${{ steps.page.outputs.file }}\`"
-          }
-          EOF
-          )"
+            --data "$PAYLOAD"
 
       - name: Notify Slack on failure
         if: failure()
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
+          PAYLOAD=$(jq -n \
+            --arg channel "${{ github.event.inputs.slack_channel }}" \
+            --arg user "${{ github.event.inputs.slack_user }}" \
+            --arg text "Failed to generate doc for *${{ github.event.inputs.concept }}*. Check the <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|workflow run> for details." \
+            '{channel: $channel, user: $user, text: $text}')
           curl -s -X POST https://slack.com/api/chat.postEphemeral \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-type: application/json" \
-            --data "$(cat <<EOF
-          {
-            "channel": "${{ github.event.inputs.slack_channel }}",
-            "user": "${{ github.event.inputs.slack_user }}",
-            "text": "Failed to generate doc for *${{ github.event.inputs.concept }}*. Check the <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|workflow run> for details."
-          }
-          EOF
-          )"
+            --data "$PAYLOAD"

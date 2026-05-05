@@ -10,7 +10,7 @@ features:
   slash_commands:
     - command: /sandybox
       description: Generate a knowledge base doc
-      usage_hint: "<concept> [in <section>]"
+      usage_hint: "<concept>[, concept2, ...] [in <section>]"
       should_escape: false
 
 oauth_config:

@@ -22,6 +22,23 @@ Sections: Mobile Development (Android, iOS, Cross-Platform), Programming (Langua
 1. Create a `.md` file under the appropriate `docs/` subdirectory
 2. Add the file path to the `nav:` section in `mkdocs.yml`
 
+### Broad / Vague Topics
+
+When given a broad or vague topic (e.g., "Android Networking", "System Design", "Kotlin Concurrency"), think like a principal engineer and **split it into logical sub-topics**, each as its own doc. Then create a **wiring page** (the main topic page) that:
+
+- Provides a brief overview of the domain
+- Links to each sub-topic page with a one-line summary of what it covers
+- Uses a logical learning order (fundamentals first, advanced last)
+
+For example, "Android Networking" might become:
+- `networking/index.md` — wiring page with overview + links
+- `networking/http-fundamentals.md`
+- `networking/okhttp-internals.md`
+- `networking/retrofit.md`
+- `networking/caching-strategies.md`
+
+Each sub-topic should be self-contained and follow the content philosophy below.
+
 ## Content Philosophy
 
 Every article should serve as an **interview crash-course** — concise enough to review in one sitting, thorough enough to answer confidently. Follow this structure:
