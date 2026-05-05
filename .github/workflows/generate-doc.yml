@@ -136,7 +136,7 @@ jobs:
           new_files = {f.replace("docs/", "", 1) for f in new_files if f.endswith(".md")}
 
           with open("mkdocs.yml") as f:
-              nav = yaml.safe_load(f).get("nav", [])
+              nav = yaml.load(f, Loader=yaml.FullLoader).get("nav", [])
 
           lines = []
 
