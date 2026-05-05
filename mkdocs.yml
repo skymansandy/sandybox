@@ -111,6 +111,8 @@ nav:
         - Product Metrics: mobile/android/miscellaneous/product-metrics.md
     - iOS:
       - mobile/ios/index.md
+      - Swift Essentials: mobile/ios/swift-essentials.md
+      - iOS App Lifecycle: mobile/ios/app-lifecycle.md
     - Cross-Platform:
       - mobile/cross-platform/index.md
 
