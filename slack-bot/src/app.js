@@ -61,9 +61,16 @@ function parseMessage(text) {
   return { concept: cleaned, section: "auto" };
 }
 
+const ALLOWED_CHANNEL = process.env.SANDYBOX_CHANNEL_ID;
+
 // /sandybox <concept> in <section>
 app.command("/sandybox", async ({ command, ack, respond }) => {
   await ack();
+
+  if (ALLOWED_CHANNEL && command.channel_id !== ALLOWED_CHANNEL) {
+    await respond("This command can only be used in the #sandybox channel.");
+    return;
+  }
 
   const { concept, section } = parseMessage(command.text);
 
@@ -88,7 +95,7 @@ app.command("/sandybox", async ({ command, ack, respond }) => {
         concept,
         section,
         slack_channel: command.channel_id,
-        slack_thread_ts: "",
+        slack_user: command.user_id,
       },
     });
 

@@ -15,9 +15,9 @@ on:
         description: "Slack channel ID for reply"
         required: true
         type: string
-      slack_thread_ts:
-        description: "Slack thread timestamp for threaded reply"
-        required: false
+      slack_user:
+        description: "Slack user ID for ephemeral reply"
+        required: true
         type: string
 
 concurrency:
@@ -103,12 +103,13 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
-          curl -s -X POST https://slack.com/api/chat.postMessage \
+          curl -s -X POST https://slack.com/api/chat.postEphemeral \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-type: application/json" \
             --data "$(cat <<EOF
           {
             "channel": "${{ github.event.inputs.slack_channel }}",
+            "user": "${{ github.event.inputs.slack_user }}",
             "text": "Doc generated for *${{ github.event.inputs.concept }}*! :page_facing_up:\nPath: \`${{ steps.page.outputs.file }}\`"
           }
           EOF
@@ -119,12 +120,13 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
-          curl -s -X POST https://slack.com/api/chat.postMessage \
+          curl -s -X POST https://slack.com/api/chat.postEphemeral \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-type: application/json" \
             --data "$(cat <<EOF
           {
             "channel": "${{ github.event.inputs.slack_channel }}",
+            "user": "${{ github.event.inputs.slack_user }}",
             "text": "Failed to generate doc for *${{ github.event.inputs.concept }}*. Check the <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|workflow run> for details."
           }
           EOF
