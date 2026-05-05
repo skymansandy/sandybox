@@ -152,12 +152,18 @@ jobs:
                               has_new = any_new(value)
                               if has_new:
                                   indent = "    " * depth
-                                  lines.append(f"{indent}*{label}*")
-                                  walk(value, depth + 1)
+                                  # Check if the section has an index.md as first child
+                                  first = value[0] if value else None
+                                  if isinstance(first, str) and first in new_files:
+                                      page_path = first.replace(".md", "/").replace("index/", "")
+                                      lines.append(f"{indent}• <{site_url}{page_path}|{label}>")
+                                      walk(value[1:], depth + 1)
+                                  else:
+                                      lines.append(f"{indent}*{label}*")
+                                      walk(value, depth + 1)
                   elif isinstance(item, str) and item in new_files:
-                      page_path = item.replace(".md", "/").replace("index/", "")
-                      indent = "    " * depth
-                      lines.append(f"{indent}• <{site_url}{page_path}|{item}>")
+                      # Skip bare index.md strings (already handled above)
+                      pass
 
           def any_new(items):
               for item in items:
@@ -182,21 +188,27 @@ jobs:
         if: success()
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          PAGE_LINKS: ${{ steps.pages.outputs.links }}
         run: |
-          LINKS=$(cat <<'LINKS_END'
-          ${{ steps.pages.outputs.links }}
-          LINKS_END
-          )
-          MSG=$(printf "Docs generated for *${{ github.event.inputs.concept }}*!\n\n%s" "$LINKS")
+          MSG="Docs generated for *${{ github.event.inputs.concept }}*!"$'\n\n'"${PAGE_LINKS}"
+          echo "=== Slack message ==="
+          echo "$MSG"
+          echo "=== End message ==="
           PAYLOAD=$(jq -n \
             --arg channel "${{ github.event.inputs.slack_channel }}" \
             --arg user "${{ github.event.inputs.slack_user }}" \
             --arg text "$MSG" \
             '{channel: $channel, user: $user, text: $text}')
-          curl -s -X POST https://slack.com/api/chat.postEphemeral \
+          echo "=== Payload ==="
+          echo "$PAYLOAD"
+          echo "=== End payload ==="
+          RESPONSE=$(curl -s -X POST https://slack.com/api/chat.postEphemeral \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-type: application/json" \
-            --data "$PAYLOAD"
+            --data "$PAYLOAD")
+          echo "=== Slack response ==="
+          echo "$RESPONSE"
+          echo "=== End response ==="
 
       - name: Notify Slack on failure
         if: failure()
@@ -208,7 +220,13 @@ jobs:
             --arg user "${{ github.event.inputs.slack_user }}" \
             --arg text "Failed to generate doc for *${{ github.event.inputs.concept }}*. Check the <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|workflow run> for details." \
             '{channel: $channel, user: $user, text: $text}')
-          curl -s -X POST https://slack.com/api/chat.postEphemeral \
+          echo "=== Payload ==="
+          echo "$PAYLOAD"
+          echo "=== End payload ==="
+          RESPONSE=$(curl -s -X POST https://slack.com/api/chat.postEphemeral \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-type: application/json" \
-            --data "$PAYLOAD"
+            --data "$PAYLOAD")
+          echo "=== Slack response ==="
+          echo "$RESPONSE"
+          echo "=== End response ==="
