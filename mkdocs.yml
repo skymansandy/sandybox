@@ -76,6 +76,7 @@ nav:
         - Storage: mobile/android/data-storage/storage.md
         - Serialization: mobile/android/data-storage/serialization.md
         - Database Internals: mobile/android/data-storage/database-internals.md
+        - Room Entity Internals: mobile/android/data-storage/entity-flow-internals.md
         - Room Indexing: mobile/android/data-storage/room-indexing.md
         - Room Triggers & Callbacks: mobile/android/data-storage/room-triggers.md
         - Reactive Queries with Flow: mobile/android/data-storage/room-reactive-queries.md
@@ -88,6 +89,7 @@ nav:
         - Broadcast Receivers: mobile/android/system-services/broadcast-receivers.md
         - Content Providers: mobile/android/system-services/content-providers.md
         - Notifications & FCM: mobile/android/system-services/notifications.md
+        - Push Notification Architecture: mobile/android/system-services/push-notification-internals.md
         - WorkManager: mobile/android/system-services/workmanager.md
         - Intents & IPC: mobile/android/system-services/intents-ipc.md
       - Observability:
@@ -114,6 +116,7 @@ nav:
         - App Startup: mobile/android/miscellaneous/app-startup.md
         - Pagination: mobile/android/miscellaneous/pagination.md
         - Product Metrics: mobile/android/miscellaneous/product-metrics.md
+        - Deep Links & Attribution: mobile/android/miscellaneous/deep-links-attribution.md
     - iOS:
       - mobile/ios/index.md
       - Swift Essentials: mobile/ios/swift-essentials.md
@@ -129,7 +132,13 @@ nav:
         - Language Essentials: programming/languages/kotlin/essentials.md
         - Coroutines: programming/languages/kotlin/coroutines.md
         - Flow: programming/languages/kotlin/flow.md
+        - KSP: programming/languages/kotlin/ksp.md
         - KMP: programming/languages/kotlin/kmp.md
+    - Data Formats:
+      - programming/data-formats/index.md
+      - JSON & YAML: programming/data-formats/json-yaml.md
+      - Protocol Buffers: programming/data-formats/protobuf.md
+      - Apache Thrift: programming/data-formats/thrift.md
     - Design Patterns:
       - programming/design-patterns/index.md
       - Creational Patterns: programming/design-patterns/creational-patterns.md
@@ -165,6 +174,9 @@ nav:
     - Databases:
       - infra/databases/index.md
       - SQL vs NoSQL: infra/databases/sql-vs-nosql.md
+      - Indexing: infra/databases/indexing.md
+      - Full-Text Search: infra/databases/full-text-search.md
+      - Query Optimization: infra/databases/query-optimization.md
 
   - Science:
     - science/index.md
