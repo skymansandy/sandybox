@@ -2,14 +2,8 @@
   "name": "sandybox-slack-bot",
   "version": "1.0.0",
   "description": "Slack bot that triggers doc generation for the sandybox knowledge base",
-  "main": "src/app.js",
-  "scripts": {
-    "start": "node src/app.js",
-    "dev": "node --watch src/app.js"
-  },
   "dependencies": {
     "@octokit/rest": "^21.0.0",
-    "@slack/bolt": "^4.1.0",
-    "dotenv": "^16.4.0"
+    "@vercel/functions": "^3.5.0"
   }
 }

@@ -1,17 +1,17 @@
 # Sandybox Slack Bot
 
-Slack bot that generates knowledge base docs on demand. Mention the bot with a concept, and it triggers a GitHub Action that uses Claude to write the doc and update the site.
+Serverless Slack slash command that triggers doc generation. Deployed on Vercel.
 
 ## Usage
 
 ```
-@SandyboxBot Kotlin Coroutines in android
-@SandyboxBot gRPC fundamentals in networking
-@SandyboxBot Binary Search Trees in dsa
-@SandyboxBot some random TIL              # Claude picks the section
+/sandybox Kotlin Coroutines in android
+/sandybox gRPC fundamentals in networking
+/sandybox Docker, Kubernetes in devops
+/sandybox some random concept              # Claude picks the section
 ```
 
-Format: `@Bot <concept> [in <section>]`
+Format: `/sandybox <concept>[, concept2, ...] [in <section>]`
 
 ### Section shortcuts
 
@@ -35,48 +35,32 @@ You can also use full nav paths like `Mobile > Android > Concurrency`.
 
 ## Setup
 
-### 1. Create a Slack App
+### 1. Deploy to Vercel
 
-1. Go to [api.slack.com/apps](https://api.slack.com/apps) and create a new app
-2. **OAuth & Permissions** — add bot scopes:
-   - `app_mentions:read`
-   - `chat:write`
-3. **Socket Mode** — enable it and generate an app-level token (`xapp-...`)
-4. **Event Subscriptions** — subscribe to `app_mention` bot event
-5. Install the app to your workspace
-6. Copy the **Bot User OAuth Token** (`xoxb-...`) and **Signing Secret**
+1. Install Vercel CLI: `npm i -g vercel`
+2. From the `slack-bot/` directory: `vercel`
+3. Add env vars: `vercel env add SLACK_SIGNING_SECRET` (repeat for `GITHUB_TOKEN`, `SANDYBOX_CHANNEL_ID`)
+4. Deploy: `vercel --prod`
+5. Note your URL: `https://your-project.vercel.app`
 
-### 2. Create a GitHub PAT
+### 2. Configure Slack App
 
-1. Go to GitHub Settings > Developer settings > Personal access tokens
-2. Generate a token with scopes: `repo`, `actions:write`
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) → select your app
+2. **App Manifest** → update with `slack-app-manifest.yml` (replace `YOUR_VERCEL_URL` with your actual Vercel URL)
+3. **Reinstall to Workspace**
+4. **OAuth & Permissions** → bot scopes: `chat:write`, `commands`
 
-### 3. Set up GitHub repo secrets
+### 3. Create a GitHub PAT
 
-In the sandybox repo, go to Settings > Secrets > Actions and add:
+1. Go to GitHub Settings > Developer settings > Fine-grained tokens
+2. Repository access: `sandybox` only
+3. Permissions: Contents (read/write) + Actions (read/write)
+
+### 4. GitHub repo secrets
 
 | Secret | Value |
 |---|---|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
-| `SLACK_WEBHOOK_URL` | Slack incoming webhook URL (create one in your Slack app under Incoming Webhooks) |
-
-### 4. Configure environment
-
-```bash
-cp .env.example .env
-# Fill in the values from steps 1 and 2
-```
-
-### 5. Run
-
-```bash
-npm install
-npm start
-```
-
-### Deployment (Fly.io)
-
-1. Install the Fly CLI: `brew install flyctl`
-2. Run `fly auth login` and `fly launch` from the `slack-bot/` directory
-3. Set secrets: `fly secrets set SLACK_BOT_TOKEN=xoxb-... SLACK_SIGNING_SECRET=... SLACK_APP_TOKEN=xapp-... GITHUB_TOKEN=ghp_...`
-4. Deploy: `fly deploy`
+| `CLAUDE_CODE_OAUTH_TOKEN` | Run `claude setup-token` locally |
+| `GIT_USER_NAME` | Your name |
+| `GIT_USER_EMAIL` | Your email |
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) |

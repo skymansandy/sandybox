@@ -6,11 +6,12 @@ display_information:
 features:
   bot_user:
     display_name: SandyBot
-    always_online: true
+    always_online: false
   slash_commands:
     - command: /sandybox
       description: Generate a knowledge base doc
       usage_hint: "<concept>[, concept2, ...] [in <section>]"
+      url: https://slack-bot-xi-one.vercel.app/api/sandybox
       should_escape: false
 
 oauth_config:
@@ -23,5 +24,5 @@ settings:
   interactivity:
     is_enabled: false
   org_deploy_enabled: false
-  socket_mode_enabled: true
+  socket_mode_enabled: false
   token_rotation_enabled: false
