@@ -54,6 +54,9 @@ nav:
         - Views & UI Components: mobile/android/core-platform/views.md
       - Concurrency:
         - Multithreading: mobile/android/concurrency/multithreading.md
+        - Main Thread: mobile/android/concurrency/main-thread.md
+        - Coroutine Internals: mobile/android/concurrency/coroutine-internals.md
+        - Flow & Channel Best Practices: mobile/android/concurrency/flow-channel-best-practices.md
       - Architecture & Patterns:
         - Design Patterns: mobile/android/architecture-patterns/design-patterns.md
         - SOLID Principles: mobile/android/architecture-patterns/solid-principles.md
