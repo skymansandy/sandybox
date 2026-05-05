@@ -81,6 +81,12 @@ nav:
         - Notifications & FCM: mobile/android/system-services/notifications.md
         - WorkManager: mobile/android/system-services/workmanager.md
         - Intents & IPC: mobile/android/system-services/intents-ipc.md
+      - Build System:
+        - Gradle & Build System: mobile/android/build-system/index.md
+        - Gradle Fundamentals: mobile/android/build-system/gradle-fundamentals.md
+        - Build Variants: mobile/android/build-system/build-variants.md
+        - Dependency Management: mobile/android/build-system/dependency-management.md
+        - Build Performance: mobile/android/build-system/build-performance.md
       - Miscellaneous:
         - Android Essentials: mobile/android/miscellaneous/android-essentials.md
         - Unit Testing: mobile/android/miscellaneous/unit-testing.md
