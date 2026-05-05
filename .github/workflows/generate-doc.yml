@@ -1,0 +1,127 @@
+name: Generate Knowledge Doc
+
+on:
+  workflow_dispatch:
+    inputs:
+      concept:
+        description: "Concept to document"
+        required: true
+        type: string
+      section:
+        description: "Nav section path (e.g. Mobile > Android > Concurrency)"
+        required: true
+        type: string
+      slack_channel:
+        description: "Slack channel ID for reply"
+        required: true
+        type: string
+      slack_thread_ts:
+        description: "Slack thread timestamp for threaded reply"
+        required: false
+        type: string
+
+concurrency:
+  group: doc-generation
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install mkdocs
+        run: pip install mkdocs-material
+
+      - name: Generate doc with Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are adding a new knowledge base article to a MkDocs site.
+
+            CONCEPT: ${{ github.event.inputs.concept }}
+            TARGET SECTION: ${{ github.event.inputs.section }}
+
+            INSTRUCTIONS:
+            1. Read mkdocs.yml to understand the current nav structure and find where the target section lives.
+            2. Read 1-2 existing docs in that section to match the writing style and conventions.
+            3. Determine an appropriate filename (lowercase, hyphenated, e.g. "coroutines.md").
+            4. Determine the correct subdirectory under docs/ based on the section path.
+            5. Create the markdown file with:
+               - H1 title matching the concept
+               - Well-structured sections with H2/H3 headings
+               - Use admonitions (!!! note, !!! tip, !!! warning) where helpful
+               - Use mermaid diagrams for architectural/flow concepts
+               - Use fenced code blocks with language tags for code examples
+               - Use tabbed content (=== "Tab") when comparing alternatives
+               - Make it comprehensive but concise — aim for a reference doc
+            6. Update mkdocs.yml nav to include the new file in the correct section.
+            7. If TARGET SECTION is "auto", determine the best section from the concept context.
+            8. Do NOT modify any existing files other than mkdocs.yml.
+
+            CONVENTIONS (from existing docs):
+            - Files use kebab-case: e.g. solid-principles.md, jetpack-compose.md
+            - Nav labels are human-readable: e.g. "SOLID Principles", "Jetpack Compose"
+            - Content uses H1 for page title, H2 for major sections, H3 for subsections
+            - Mermaid diagrams use ```mermaid fenced blocks
+          allowed_tools: "Edit,Write,Read,Glob,Grep"
+
+      - name: Validate build
+        run: mkdocs build --strict
+
+      - name: Commit and push
+        env:
+          GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+          GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
+        run: |
+          git config user.name "$GIT_USER_NAME"
+          git config user.email "$GIT_USER_EMAIL"
+          git add docs/ mkdocs.yml
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "docs: add ${{ github.event.inputs.concept }}"
+          git push
+
+      - name: Get new page path
+        id: page
+        run: |
+          NEW_FILE=$(git diff --name-only HEAD~1 -- docs/ | head -1)
+          PAGE_PATH=$(echo "$NEW_FILE" | sed 's|^docs/||; s|\.md$|/|; s|index/$||')
+          echo "path=$PAGE_PATH" >> "$GITHUB_OUTPUT"
+          echo "file=$NEW_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Notify Slack on success
+        if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          PAYLOAD=$(cat <<EOF
+          {
+            "channel": "${{ github.event.inputs.slack_channel }}",
+            "thread_ts": "${{ github.event.inputs.slack_thread_ts }}",
+            "text": "Doc generated for *${{ github.event.inputs.concept }}*! :page_facing_up:\nPath: \`${{ steps.page.outputs.file }}\`"
+          }
+          EOF
+          )
+          curl -s -X POST -H 'Content-type: application/json' --data "$PAYLOAD" "$SLACK_WEBHOOK_URL"
+
+      - name: Notify Slack on failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          PAYLOAD=$(cat <<EOF
+          {
+            "channel": "${{ github.event.inputs.slack_channel }}",
+            "text": "Failed to generate doc for *${{ github.event.inputs.concept }}*. Check the <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|workflow run> for details."
+          }
+          EOF
+          )
+          curl -s -X POST -H 'Content-type: application/json' --data "$PAYLOAD" "$SLACK_WEBHOOK_URL"

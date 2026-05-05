@@ -374,30 +374,3 @@ Proto DataStore requires a `Serializer` to read/write your data type. Two common
 | **Moshi (codegen)** | Code generation | Fast | Safe (throws on null) | No | Android-only projects |
 | **kotlinx.serialization** | Compiler plugin | Fastest | Safe (explicit handling) | Yes | New projects, KMP |
 | **Protobuf** | Code generation | Fastest (binary) | Schema-enforced | Yes | gRPC, DataStore, bandwidth-critical |
-
----
-
-## Interview Q&A
-
-??? question "What is the difference between Serializable and Parcelable?"
-    `Serializable` is a Java standard interface that uses reflection to convert objects to byte streams — it is simple but slow and creates many temporary objects. `Parcelable` is Android-specific, writes data into a native memory `Parcel` without reflection, and is significantly faster. Always use `@Parcelize` for passing data between Android components.
-
-??? question "Why should you avoid Gson in Kotlin projects?"
-    Gson uses reflection and completely bypasses Kotlin's null-safety system. If a JSON field is missing or null, Gson silently assigns `null` to a non-null Kotlin property instead of throwing an error. This leads to `NullPointerException` at runtime far from the deserialization site, making bugs hard to track down.
-
-??? question "How does kotlinx.serialization differ from Moshi?"
-    kotlinx.serialization is a Kotlin compiler plugin that generates serialization code at compile time with no reflection, supports multiplatform (Android, iOS, Desktop, JS), and works with multiple formats (JSON, Protobuf, CBOR) from a single `@Serializable` annotation. Moshi is JVM-only and limited to JSON, though its codegen mode is also fast and type-safe.
-
-??? question "What is serialVersionUID and when does it matter?"
-    `serialVersionUID` is a version identifier used by Java `Serializable` to verify that the sender and receiver of a serialized object have compatible class definitions. If you modify a `Serializable` class without updating the UID, deserialization of previously persisted data throws `InvalidClassException`. It matters primarily for disk persistence, not transient IPC.
-
-??? question "When would you choose Protobuf over JSON?"
-    Protobuf is preferred when payload size and parsing speed are critical — it produces 3-10x smaller messages than JSON and parses faster because it is binary. It also has built-in backward compatibility through field numbers. Use it for gRPC communication, Proto DataStore, and bandwidth-constrained mobile scenarios.
-
----
-
-!!! tip "Further Reading"
-    - [Parcelable implementation generator (kotlin-parcelize)](https://developer.android.com/kotlin/parcelize)
-    - [kotlinx.serialization Guide](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/serialization-guide.md)
-    - [Moshi GitHub Repository](https://github.com/square/moshi)
-    - [Protocol Buffers Documentation](https://protobuf.dev/overview/)

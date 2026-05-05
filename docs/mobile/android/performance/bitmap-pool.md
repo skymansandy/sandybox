@@ -74,30 +74,6 @@ URL
 !!! note "LRU Eviction"
     When the memory cache is full, least-recently-used entries are evicted **to the bitmap pool** for reuse rather than being deallocated.
 
----
-
-## Interview Q&A
-
-??? question "What is a Bitmap pool and why is it needed?"
-    A Bitmap pool is a cache of pre-allocated Bitmap objects available for reuse. Without it, loading and scrolling through many images causes continuous allocation and deallocation of Bitmap memory, which triggers frequent garbage collection and visible UI jank. The pool lets the image loader reuse existing memory blocks instead of allocating new ones.
-
-??? question "Explain Glide's caching strategy."
-    Glide uses a three-tier caching strategy. First, it checks the in-memory LRU cache for an already-decoded Bitmap. On a miss, it checks the disk cache for a previously downloaded and/or transformed image. On a disk miss, it downloads from the network, stores on disk, decodes (reusing memory from the Bitmap pool), downsamples to the target ImageView size, and stores in the memory cache.
-
-??? question "What is downsampling and why is it important for image loading?"
-    Downsampling reduces an image's resolution before loading it into memory. If an ImageView is 400x400 pixels but the source image is 4000x4000, loading the full image wastes ~60MB of memory. Downsampling (via `inSampleSize` or library-managed resizing) loads only the pixels needed for the target size, dramatically reducing memory usage and preventing OOM errors.
-
-??? question "How does Glide handle lifecycle awareness?"
-    Glide ties image requests to the lifecycle of the hosting Activity or Fragment. When the Activity is paused, Glide pauses ongoing requests. When the Activity is destroyed, Glide cancels requests and clears associated resources. This prevents wasted network calls, memory leaks, and crashes from setting images on destroyed views.
-
----
-
-!!! tip "Further Reading"
-    - [Glide Documentation](https://bumptech.github.io/glide/)
-    - [Loading large bitmaps efficiently](https://developer.android.com/topic/performance/graphics/load-bitmap)
-    - [Manage bitmap memory](https://developer.android.com/topic/performance/graphics/manage-memory)
-    - [Coil Image Loading Library](https://coil-kt.github.io/coil/)
-
 ### Downsampling
 
 Glide checks the target `ImageView` size (e.g., 400x400). If the source image is larger (e.g., 2000x2000), Glide reduces it to match the view dimensions before storing in memory. This prevents loading unnecessarily large bitmaps.

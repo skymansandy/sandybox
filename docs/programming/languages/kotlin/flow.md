@@ -883,32 +883,3 @@ launch {
 | `Channel.BUFFERED` (64) | Buffer up to 64 elements |
 | `Channel.CONFLATED` | Keep only the latest element |
 | `Channel.UNLIMITED` | Unbounded buffer (risk of OOM) |
-
----
-
-## Interview Q&A
-
-??? question "What is the difference between a cold flow and a hot flow?"
-    A cold flow does not produce values until it is collected, and each collector triggers an independent execution. Hot flows (`StateFlow`, `SharedFlow`) emit values regardless of whether anyone is collecting. `StateFlow` always holds the latest value, while `SharedFlow` supports configurable replay and buffering.
-
-??? question "How do `StateFlow` and `SharedFlow` differ, and when would you use each?"
-    `StateFlow` requires an initial value, always holds the current value via `.value`, and skips duplicate emissions using `equals()`. `SharedFlow` has no initial value, configurable replay, and emits all values including duplicates. Use `StateFlow` for UI state and `SharedFlow` for one-shot events or notifications.
-
-??? question "What does `flowOn` do and how does it differ from `launchIn`?"
-    `flowOn` changes the dispatcher for all upstream operators (everything above it in the chain) but does not affect the collector. `launchIn` is a terminal operator that launches the flow collection in a given scope, returning a `Job`. They serve different purposes: `flowOn` controls where emissions happen, `launchIn` controls where and when collection starts.
-
-??? question "How do you safely collect flows in an Android Activity or Fragment?"
-    Use `repeatOnLifecycle` inside `lifecycleScope.launch` to start and stop collection based on the lifecycle state. This prevents wasted resources (like active GPS listeners) when the app is in the background. In Compose, use `collectAsStateWithLifecycle()`.
-
-??? question "Explain the difference between `flatMapLatest`, `flatMapConcat`, and `flatMapMerge`."
-    `flatMapConcat` processes inner flows sequentially, waiting for each to complete before starting the next. `flatMapMerge` collects all inner flows concurrently (default concurrency of 16). `flatMapLatest` cancels the previous inner flow whenever a new emission arrives from the source -- ideal for search-as-you-type scenarios.
-
-??? question "What is the `catch` operator's limitation?"
-    The `catch` operator only catches exceptions from operators upstream of it in the flow chain. Exceptions thrown inside the `collect` block are not caught by `catch`. To handle collector errors, use a `try-catch` around the `collect` call itself.
-
-!!! tip "Further Reading"
-    - [Kotlin Flow Documentation](https://kotlinlang.org/docs/flow.html) -- official guide covering cold flows, operators, and context
-    - [StateFlow and SharedFlow](https://kotlinlang.org/docs/stateflow-and-sharedflow.html) -- official reference for hot flows
-    - [Collect Flows on Android](https://developer.android.com/kotlin/flow/stateflow-and-sharedflow) -- lifecycle-aware collection patterns
-    - [A Safer Way to Collect Flows](https://medium.com/androiddevelopers/a-safer-way-to-collect-flows-from-android-uis-23080b1f8bda) -- Manuel Vivo's guide on repeatOnLifecycle
-    - [Things to Know About Flow's shareIn and stateIn](https://medium.com/androiddevelopers/things-to-know-about-flows-sharein-and-statein-operators-20e6ccb2bc74) -- hot flow conversion best practices

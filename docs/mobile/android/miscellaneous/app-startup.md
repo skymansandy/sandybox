@@ -321,29 +321,3 @@ Open the `.trace` file in Android Studio Profiler to see a flame chart of method
 
 !!! tip "Staff POV"
     Track cold start time as a **product metric**. Set a budget (e.g., <800ms TTID) and alert when it regresses. Use Firebase Performance for field metrics and Macrobenchmark in CI for lab metrics. Both are needed — field metrics catch device-specific regressions, lab metrics catch code regressions before they ship.
-
----
-
-## Interview Q&A
-
-??? question "What is the difference between cold, warm, and hot start?"
-    A cold start creates a new process from scratch, running `Application.onCreate()` and the full Activity creation cycle (500ms-2s+). A warm start reuses an existing process but recreates the Activity from `onCreate()` (200-500ms). A hot start brings an already in-memory Activity to the foreground via `onResume()` (<100ms).
-
-??? question "What is the difference between TTID and TTFD?"
-    TTID (Time to Initial Display) measures the time from intent to the first frame drawn on screen and is tracked automatically by Android via Logcat. TTFD (Time to Full Display) measures the time until all content is rendered (including network data and images) and requires manually calling `reportFullyDrawn()` in your code.
-
-??? question "How does the Jetpack App Startup library improve startup performance?"
-    Instead of each library registering its own ContentProvider (each adding ~2ms overhead), App Startup consolidates all library initializations into a single ContentProvider. It also supports explicit dependency ordering via the `dependencies()` method, which creates a directed acyclic graph resolved in topological order.
-
-??? question "What are Baseline Profiles and how do they improve cold start time?"
-    Baseline Profiles ship pre-compiled (AOT) critical code paths with the APK, so the first run does not rely on interpretation or JIT compilation. They are generated using Macrobenchmark by recording critical user journeys. The Android runtime uses these profiles to compile the specified methods ahead of time during installation.
-
-??? question "Why does the first coroutine launch have a performance cost at startup?"
-    The first coroutine launch initializes the entire coroutine machinery — `CoroutineDispatcher`, `CoroutineContext`, and internal thread pools — which can take ~100ms on low-end devices. This cost is paid only once per process. To avoid this at startup, use `Executors` for initial work and defer coroutine usage until after the first frame.
-
-!!! tip "Further Reading"
-    - [App Startup - Android Developers](https://developer.android.com/topic/libraries/app-startup)
-    - [App Startup Time - Android Developers](https://developer.android.com/topic/performance/vitals/launch-time)
-    - [Baseline Profiles - Android Developers](https://developer.android.com/topic/performance/baselineprofiles/overview)
-    - [Macrobenchmark - Android Developers](https://developer.android.com/topic/performance/benchmarking/macrobenchmark-overview)
-    - [Splash Screen API - Android Developers](https://developer.android.com/develop/ui/views/launch/splash-screen)

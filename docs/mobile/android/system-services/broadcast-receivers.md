@@ -118,24 +118,3 @@ sendBroadcast(intent, "com.example.MY_PERMISSION")
 
 !!! tip
     Combining `setPackage()` with a custom permission gives you fine-grained control over who can receive your broadcasts.
-
----
-
-## Interview Q&A
-
-??? question "What is the difference between manifest-declared and context-registered broadcast receivers?"
-    Manifest-declared (static) receivers are registered in `AndroidManifest.xml` and can receive broadcasts even when the app is not running. Context-registered (dynamic) receivers are registered programmatically and are tied to the component's lifecycle. Since Android 8.0, most implicit broadcasts cannot be received via manifest-declared receivers.
-
-??? question "What restrictions did Android 8.0 (Oreo) introduce for broadcast receivers?"
-    Android 8.0 prohibits manifest-declared receivers from listening to most implicit broadcasts to reduce background processing. Only a few system broadcasts like `ACTION_LOCALE_CHANGED` and `SMS_RECEIVED` are exempt. Apps must use context-registered receivers or other mechanisms like `WorkManager` for the rest.
-
-??? question "How do you send a broadcast that only a specific app can receive?"
-    You can use `intent.setPackage("com.example.targetapp")` to restrict the broadcast to a specific app. You can also enforce a custom permission on the broadcast so only receivers holding that permission can receive it. Combining both approaches provides the most fine-grained access control.
-
-??? question "What happens if onReceive() takes too long?"
-    The `onReceive()` method runs on the main thread and must complete within approximately 10 seconds, otherwise the system may consider the receiver unresponsive and trigger an ANR. For longer work, schedule a job using `WorkManager` or start a foreground service from within `onReceive()`.
-
-!!! tip "Further Reading"
-    - [Broadcasts overview - Android Developers](https://developer.android.com/develop/background-work/broadcasts)
-    - [Implicit Broadcast Exceptions - Android Developers](https://developer.android.com/develop/background-work/broadcasts/broadcast-exceptions)
-    - [Restricting broadcasts with permissions - Android Developers](https://developer.android.com/develop/background-work/broadcasts#restrict-broadcasts-permissions)

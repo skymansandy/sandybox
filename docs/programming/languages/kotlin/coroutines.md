@@ -651,32 +651,3 @@ Every flow operator like `map`, `filter`, `flatMapLatest` uses `suspend` functio
 | Blocking I/O | `Dispatchers.IO` |
 | UI updates | `Dispatchers.Main.immediate` |
 | Rate-limit a resource | `Dispatchers.IO.limitedParallelism(n)` |
-
----
-
-## Interview Q&A
-
-??? question "What is structured concurrency and why does it matter?"
-    Structured concurrency means a coroutine's lifetime is bounded by its scope. A parent waits for all children to complete, cancelling a parent cancels all children, and a failing child cancels the parent (unless using `SupervisorJob`). This prevents leaked coroutines, forgotten background work, and makes error propagation predictable.
-
-??? question "What is the difference between `launch` and `async`?"
-    `launch` returns a `Job` and is fire-and-forget -- exceptions propagate immediately to the parent. `async` returns a `Deferred<T>` and holds exceptions until `await()` is called. Use `async` only when you need to run parallel computations and collect their results.
-
-??? question "How does coroutine cancellation work?"
-    Cancellation is cooperative. A coroutine must check for cancellation by calling a suspend function (like `delay` or `yield`), calling `ensureActive()`, or checking `isActive`. Long-running CPU work that never checks will not be cancelled. Use `withContext(NonCancellable)` only in `finally` blocks for critical cleanup.
-
-??? question "When would you use `SupervisorJob` or `supervisorScope`?"
-    Use them when child coroutines are independent and a failure in one should not cancel siblings. For example, loading a feed where a failed recommendations request should not cancel the posts request. Both `viewModelScope` and `lifecycleScope` use `SupervisorJob` internally for this reason.
-
-??? question "How does `suspend` work under the hood?"
-    The compiler transforms each suspend function into a state machine. An extra `Continuation` parameter is added, and each suspension point becomes a labeled state. Local variables are saved in the continuation object on the heap, so no thread stack is held while suspended -- this is why coroutines are lightweight.
-
-??? question "Why should you avoid `GlobalScope`?"
-    `GlobalScope` is not bound to any lifecycle, so coroutines launched in it live until they complete or the process dies. This risks memory leaks and wasted work (e.g., network calls for a screen that no longer exists). Always use a lifecycle-bound scope like `viewModelScope` or `lifecycleScope`.
-
-!!! tip "Further Reading"
-    - [Kotlin Coroutines Guide](https://kotlinlang.org/docs/coroutines-guide.html) -- official coroutines tutorial and reference
-    - [Structured Concurrency](https://kotlinlang.org/docs/coroutines-basics.html#structured-concurrency) -- core principles of coroutine lifecycles
-    - [Coroutines on Android](https://developer.android.com/kotlin/coroutines) -- Android-specific best practices
-    - [Coroutine Exceptions Handling](https://kotlinlang.org/docs/exception-handling.html) -- official guide on exception propagation
-    - [KotlinConf 2019: Coroutines! Gotta catch 'em all](https://www.youtube.com/watch?v=w0kfnydnFWI) -- Florina Muntenescu and Manuel Vivo on coroutine pitfalls

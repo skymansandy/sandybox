@@ -236,28 +236,3 @@
     ```
 
     `PaymentService` depends on the `PaymentProcessor` abstraction. Concrete implementations are injected from outside.
-
----
-
-## Interview Q&A
-
-??? question "Can you explain the Single Responsibility Principle with an Android example?"
-    A ViewModel should only handle UI state management, not also perform network calls, database queries, and analytics tracking directly. Each concern should be in its own class — a Repository for data access, a UseCase for business logic, and the ViewModel for UI state. This makes each class easier to test, maintain, and reuse.
-
-??? question "How does the Open-Closed Principle apply in Android development?"
-    OkHttp Interceptors are a great example — you extend HTTP behavior by adding new Interceptors (open for extension) without modifying OkHttpClient's core logic (closed for modification). Similarly, RecyclerView.Adapter lets you handle any data type by extending the adapter without modifying RecyclerView itself.
-
-??? question "What is the Liskov Substitution Principle and why does it matter?"
-    Any subclass should be usable wherever its parent class is expected without breaking behavior. If a function accepts a `Bird` and calls `fly()`, passing a `Penguin` that throws an exception violates LSP. The fix is to separate the flying capability into its own interface so only birds that can fly implement it.
-
-??? question "How does Dependency Inversion relate to Dependency Injection?"
-    Dependency Inversion is the principle — depend on abstractions, not concretions. Dependency Injection is the mechanism that implements it — a framework like Hilt provides concrete implementations through the constructor. Together, they enable loose coupling and testability by ensuring classes depend on interfaces rather than creating their own concrete dependencies.
-
-??? question "Give a real-world example of Interface Segregation in Android."
-    Instead of one large `LifecycleObserver` interface with methods for every lifecycle event, Android provides `DefaultLifecycleObserver` with default implementations so you only override what you need. Similarly, splitting a large repository interface into `ReadableUserRepository` and `WritableUserRepository` prevents read-only consumers from depending on write methods.
-
-!!! tip "Further Reading"
-    - [Guide to app architecture](https://developer.android.com/topic/architecture) — SOLID in practice within Android's recommended architecture
-    - [SOLID principles](https://en.wikipedia.org/wiki/SOLID) — Wikipedia overview with detailed explanations
-    - [Dependency injection in Android](https://developer.android.com/training/dependency-injection) — How DI implements Dependency Inversion
-    - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) — The original Clean Architecture blog post

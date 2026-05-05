@@ -340,32 +340,3 @@ Android's low-memory killer daemon (lmkd) kills processes in order of importance
 3. **Service processes** — running a started Service
 4. **Visible processes** — visible but not foreground Activity
 5. **Foreground processes** — current Activity, foreground Service (almost never killed)
-
----
-
-## Interview Q&A
-
-??? question "What are the main layers of the Android architecture?"
-    The Android architecture consists of five layers from bottom to top: Linux Kernel, HAL (Hardware Abstraction Layer), Native C/C++ Libraries and ART (Android Runtime), Android Framework, and Applications. Each layer abstracts the one below it, allowing the framework to remain hardware-agnostic while apps use high-level Java/Kotlin APIs.
-
-??? question "How does ART differ from Dalvik, and what compilation strategy does modern ART use?"
-    Dalvik used JIT-only compilation at runtime, while ART (Android 7+) uses a hybrid three-phase approach: minimal AOT at install, JIT with profile writing at runtime, and background AOT compilation (via dex2oat) when the device is idle and charging. This gives fast installs, good runtime performance, and optimized subsequent launches.
-
-??? question "What is Zygote and why is it important for app startup?"
-    Zygote is a system process that pre-initializes the ART runtime and preloads ~5000+ framework classes. New app processes are forked from Zygote using `fork()`, which leverages copy-on-write to share read-only memory pages. This makes app startup fast because the runtime and common classes are already loaded.
-
-??? question "Explain the Android App Sandbox model."
-    Each app gets a unique Linux UID, runs in its own process with its own ART instance, and has a private data directory. SELinux policies and the permission system further restrict access. Apps cannot access each other's data by default and must use explicit IPC mechanisms like Content Providers or Intents.
-
-??? question "What is the 64K method limit and how is it handled?"
-    DEX bytecode uses a 16-bit index for method references, limiting each DEX file to 65,536 methods. When an app exceeds this, it must use multidex (multiple DEX files). On Android 5.0+ (API 21+), ART handles multidex natively at install time.
-
-??? question "What is the difference between APK and AAB?"
-    APK is a complete, ready-to-install package containing all resources for all device configurations. AAB is an upload format for Google Play that enables the store to generate device-specific split APKs, resulting in smaller download sizes since users only receive resources matching their device.
-
-!!! tip "Further Reading"
-    - [Platform Architecture | Android Developers](https://developer.android.com/guide/platform)
-    - [Android Runtime (ART) | Android Open Source Project](https://source.android.com/docs/core/runtime)
-    - [App Bundles | Android Developers](https://developer.android.com/guide/app-bundle)
-    - [Baseline Profiles | Android Developers](https://developer.android.com/topic/performance/baselineprofiles/overview)
-    - [AIDL | Android Developers](https://developer.android.com/develop/background-work/services/aidl)

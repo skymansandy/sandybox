@@ -454,29 +454,3 @@ class SyncWorkerTest {
     }
 }
 ```
-
----
-
-## Interview Q&A
-
-??? question "How does WorkManager guarantee that work survives app restarts and device reboots?"
-    WorkManager persists all work requests, constraints, and state in an internal Room database. On API 23+, it delegates scheduling to JobScheduler, and on older APIs it falls back to AlarmManager + BroadcastReceiver. Because the work metadata is stored in durable storage, it survives process death and device restarts.
-
-??? question "What is the difference between OneTimeWorkRequest and PeriodicWorkRequest?"
-    `OneTimeWorkRequest` executes work exactly once and can be chained with other work requests. `PeriodicWorkRequest` repeats at a specified interval with a minimum of 15 minutes. Periodic work cannot be chained, and each execution is independent.
-
-??? question "What is the difference between Expedited Work and regular work in WorkManager?"
-    Expedited work is for time-sensitive tasks that must start immediately, like processing a payment. It runs with higher priority and fewer delays than regular work. When the system's expedited quota is exhausted, the `OutOfQuotaPolicy` determines whether the work falls back to regular execution or is dropped entirely.
-
-??? question "How do you prevent duplicate work requests in WorkManager?"
-    Use `enqueueUniqueWork()` or `enqueueUniquePeriodicWork()` with a unique name and an `ExistingWorkPolicy`. The `KEEP` policy ignores new requests if work with that name already exists, `REPLACE` cancels existing work and enqueues new, and `APPEND` chains after existing work.
-
-??? question "How do you inject dependencies into a Worker with Hilt?"
-    Annotate the worker with `@HiltWorker` and use `@AssistedInject` for the constructor. You must use custom WorkManager initialization with `HiltWorkerFactory` so that Hilt can create worker instances with injected dependencies. This requires disabling the default auto-initialization ContentProvider.
-
-!!! tip "Further Reading"
-    - [WorkManager overview - Android Developers](https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started)
-    - [WorkManager Advanced Concepts - Android Developers](https://developer.android.com/develop/background-work/background-tasks/persistent/threading)
-    - [Custom WorkManager Configuration - Android Developers](https://developer.android.com/develop/background-work/background-tasks/persistent/configuration/custom-configuration)
-    - [Testing WorkManager - Android Developers](https://developer.android.com/develop/background-work/background-tasks/persistent/testing)
-```

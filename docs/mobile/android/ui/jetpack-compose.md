@@ -769,32 +769,3 @@ if (isFullScreen) {
 ```
 
 Without `movableContentOf`, switching between the `if` branches would destroy the `VideoPlayer` and create a new one. With it, the player (and its playback state, buffered data, etc.) is moved intact.
-
----
-
-## Interview Q&A
-
-??? question "How does the Compose compiler plugin differ from annotation processing (KAPT/KSP)?"
-    The `@Composable` annotation is processed by a **Kotlin compiler plugin**, not KAPT or KSP. This means it can modify the compiled function output directly — adding hidden parameters like `$composer` and `$changed`, inserting restart groups, and enabling skip logic. Annotation processors can only generate separate files; they cannot alter the function itself.
-
-??? question "What is the difference between remember and rememberSaveable?"
-    `remember` caches a value across recompositions but loses it on configuration changes or process death. `rememberSaveable` serializes the value into a `Bundle`, so it survives both configuration changes and process death. Use `rememberSaveable` for user-visible state like text input, and `remember` for transient UI state.
-
-??? question "Why does modifier order matter in Compose?"
-    Modifiers are applied left-to-right (outside-in). Each modifier wraps the element in a layer. For example, `.padding(16.dp).background(Color.Blue)` puts padding outside the background, while `.background(Color.Blue).padding(16.dp)` puts padding inside the background. Getting the order wrong leads to unexpected visual results.
-
-??? question "What are the three phases of Compose rendering, and why do they matter for performance?"
-    The three phases are **Composition** (builds the UI tree), **Layout** (measures and places nodes), and **Drawing** (renders to Canvas). State reads are tracked per phase, so reading state only in the Draw phase (e.g., via `graphicsLayer`) skips recomposition and re-layout entirely, which is critical for smooth animations.
-
-??? question "What is state hoisting, and why is it recommended?"
-    State hoisting moves state ownership out of a composable into its caller. The composable becomes stateless — it receives state as parameters and emits events via callbacks. This follows unidirectional data flow, making composables easier to test, reuse, and preview.
-
-??? question "What is the difference between compositionLocalOf and staticCompositionLocalOf?"
-    `compositionLocalOf` tracks reads at a fine-grained level, so only composables that read the value recompose when it changes. `staticCompositionLocalOf` invalidates the entire subtree below the provider when the value changes — more efficient for values that rarely change (themes, analytics instances) because it avoids read-tracking overhead.
-
-!!! tip "Further Reading"
-    - [Jetpack Compose documentation](https://developer.android.com/develop/ui/compose)
-    - [Thinking in Compose](https://developer.android.com/develop/ui/compose/mental-model)
-    - [State and Jetpack Compose](https://developer.android.com/develop/ui/compose/state)
-    - [CompositionLocal](https://developer.android.com/develop/ui/compose/compositionlocal)
-    - [Compose phases](https://developer.android.com/develop/ui/compose/phases)

@@ -460,32 +460,3 @@ Icon(
     contentDescription = null // decorative, not interactive
 )
 ```
-
----
-
-## Interview Q&A
-
-??? question "What is the difference between Application Context and Activity Context?"
-    Application Context lives as long as the app process and is safe for singletons, DI, and long-lived objects. Activity Context is tied to the Activity lifecycle and is needed for UI operations like showing dialogs and toasts. Using Activity Context in long-lived objects causes memory leaks because the Activity cannot be garbage collected.
-
-??? question "What is the difference between compileSdk, targetSdk, and minSdk?"
-    `compileSdk` determines which APIs are available at compile time. `targetSdk` declares which API level the app has been tested against, and the OS uses it to decide whether to apply backward-compatibility behaviors. `minSdk` is the lowest Android version the app can be installed on. `compileSdk` must be greater than or equal to `targetSdk`.
-
-??? question "What is the difference between LiveData and StateFlow?"
-    LiveData is Android-specific and lifecycle-aware out of the box, while StateFlow is pure Kotlin and requires `repeatOnLifecycle` or `collectAsStateWithLifecycle` for safe collection. StateFlow always has an initial value and is KMP-compatible. Modern Android development prefers StateFlow in the ViewModel layer with LiveData reserved for Java codebases.
-
-??? question "What is manifest merging and how do you resolve conflicts?"
-    The final AndroidManifest is a merge of your app manifest and all library manifests, following a priority order (build variant > app > libraries). Conflicts are resolved using `tools:node` (e.g., `tools:node="remove"` to remove a library's permission) and `tools:replace` to override specific attributes. You can inspect the merged result in Android Studio's Merged Manifest tab.
-
-??? question "How do you handle the 'Don't ask again' state for runtime permissions?"
-    When `shouldShowRequestPermissionRationale()` returns false and the permission was previously denied, the user has selected "Don't ask again." In this case, you cannot show the system permission dialog again. Instead, guide the user to the app's settings page where they can manually grant the permission.
-
-??? question "What is ProcessLifecycleOwner and when would you use it?"
-    `ProcessLifecycleOwner` provides lifecycle events for the entire app process, emitting `ON_START` when any Activity becomes visible (app foreground) and `ON_STOP` when no Activity is visible (app background). It is useful for analytics, pausing/resuming global resources, and detecting foreground/background transitions without tracking individual Activities.
-
-!!! tip "Further Reading"
-    - [Context - Android Developers](https://developer.android.com/reference/android/content/Context)
-    - [App Manifest overview - Android Developers](https://developer.android.com/guide/topics/manifest/manifest-intro)
-    - [Request runtime permissions - Android Developers](https://developer.android.com/training/permissions/requesting)
-    - [LiveData overview - Android Developers](https://developer.android.com/topic/libraries/architecture/livedata)
-    - [StateFlow and SharedFlow - Kotlin Docs](https://kotlinlang.org/docs/flow.html#stateflow-and-sharedflow)

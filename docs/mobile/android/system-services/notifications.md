@@ -151,28 +151,3 @@ FCM solves this by maintaining a **single shared connection** via Google Play Se
 
 !!! warning "Message Limits"
     FCM has message rate limits. Use it for **notifications and alerts**, not for real-time chat or streaming data.
-
----
-
-## Interview Q&A
-
-??? question "What is a Notification Channel and why is it required on Android 8.0+?"
-    A Notification Channel groups notifications by type (e.g., promotions, messages) and gives users granular control over each category's behavior (sound, vibration, importance). Starting with Android 8.0 (API 26), every notification must be assigned to a channel or it will not be displayed. Channels appear in the app's system notification settings.
-
-??? question "What is the difference between FCM data messages and notification messages?"
-    Notification messages are automatically displayed by the system when the app is in the background, but delivered to `onMessageReceived()` when the app is in the foreground. Data messages are always delivered to `onMessageReceived()` regardless of app state, giving you full control over how to handle them. For maximum flexibility, use data-only payloads.
-
-??? question "Why does Android use FCM instead of letting each app maintain its own push connection?"
-    If every app maintained its own WebSocket or persistent connection, each would keep the radio active independently, causing significant battery drain. FCM solves this by maintaining a single shared connection through Google Play Services for all apps on the device, dramatically reducing battery consumption.
-
-??? question "When does the FCM token change?"
-    The FCM token changes when the app deletes its Instance ID, the app is restored on a new device, the user uninstalls and reinstalls the app, or the user clears app data. You should handle `onNewToken()` to send the updated token to your server whenever this happens.
-
-??? question "What is the POST_NOTIFICATIONS permission and when is it required?"
-    Starting with Android 13 (API 33), apps must request the `POST_NOTIFICATIONS` runtime permission before showing any notifications. Without this permission granted by the user, notification calls are silently ignored. This gives users explicit control over which apps can send notifications at install time.
-
-!!! tip "Further Reading"
-    - [Notifications overview - Android Developers](https://developer.android.com/develop/ui/views/notifications)
-    - [Create a Notification Channel - Android Developers](https://developer.android.com/develop/ui/views/notifications/channels)
-    - [Firebase Cloud Messaging - Android](https://firebase.google.com/docs/cloud-messaging/android/client)
-    - [FCM Architecture - Firebase Docs](https://firebase.google.com/docs/cloud-messaging/fcm-architecture)
