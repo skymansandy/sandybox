@@ -1,0 +1,25 @@
+display_information:
+  name: SandyBot
+  description: Generates knowledge base docs on demand
+  background_color: "#4A154B"
+
+features:
+  bot_user:
+    display_name: SandyBot
+    always_online: true
+
+oauth_config:
+  scopes:
+    bot:
+      - app_mentions:read
+      - chat:write
+
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+  interactivity:
+    is_enabled: false
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
