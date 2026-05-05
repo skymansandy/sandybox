@@ -70,6 +70,10 @@ nav:
       - Data & Storage:
         - Storage: mobile/android/data-storage/storage.md
         - Serialization: mobile/android/data-storage/serialization.md
+        - Database Internals: mobile/android/data-storage/database-internals.md
+        - Room Indexing: mobile/android/data-storage/room-indexing.md
+        - Room Triggers & Callbacks: mobile/android/data-storage/room-triggers.md
+        - Reactive Queries with Flow: mobile/android/data-storage/room-reactive-queries.md
       - Performance:
         - Memory Management: mobile/android/performance/memory-management.md
         - APK Optimization: mobile/android/performance/apk-optimization.md
@@ -81,6 +85,18 @@ nav:
         - Notifications & FCM: mobile/android/system-services/notifications.md
         - WorkManager: mobile/android/system-services/workmanager.md
         - Intents & IPC: mobile/android/system-services/intents-ipc.md
+      - Observability:
+        - Mobile Observability: mobile/android/observability/index.md
+        - Crash Reporting & ANRs: mobile/android/observability/crash-reporting.md
+        - Logging Strategies: mobile/android/observability/logging.md
+        - Performance Monitoring: mobile/android/observability/performance-monitoring.md
+        - Network Monitoring: mobile/android/observability/network-monitoring.md
+      - Release Strategy:
+        - Mobile Release Strategy: mobile/android/release-strategy/index.md
+        - Release Pipeline: mobile/android/release-strategy/release-pipeline.md
+        - Versioning: mobile/android/release-strategy/versioning.md
+        - Staged Rollouts & Feature Flags: mobile/android/release-strategy/staged-rollouts.md
+        - App Updates: mobile/android/release-strategy/app-updates.md
       - Build System:
         - Gradle & Build System: mobile/android/build-system/index.md
         - Gradle Fundamentals: mobile/android/build-system/gradle-fundamentals.md
