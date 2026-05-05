@@ -12,6 +12,14 @@ const app = new App({
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
   headers: { "X-GitHub-Api-Version": "2022-11-28" },
+  log: {
+    debug: () => {},
+    info: () => {},
+    warn: (msg) => {
+      if (!msg.includes("is deprecated")) console.warn(msg);
+    },
+    error: console.error,
+  },
 });
 
 const OWNER = "skymansandy";
@@ -53,22 +61,24 @@ function parseMessage(text) {
   return { concept: cleaned, section: "auto" };
 }
 
-app.event("app_mention", async ({ event, say }) => {
-  const { concept, section } = parseMessage(event.text);
+// /sandybox <concept> in <section>
+app.command("/sandybox", async ({ command, ack, respond }) => {
+  await ack();
+
+  const { concept, section } = parseMessage(command.text);
 
   if (!concept) {
-    await say({ text: "Please provide a concept to document.", thread_ts: event.ts });
+    await respond("Usage: `/sandybox <concept> [in <section>]`");
     return;
   }
 
   const sectionLabel = section !== "auto" ? ` in *${section}*` : "";
 
-  await say({
-    text: `Got it! Generating a doc for *${concept}*${sectionLabel}. I'll post the link when it's ready.`,
-    thread_ts: event.ts,
-  });
+  await respond(`Got it! Generating a doc for *${concept}*${sectionLabel}. I'll post the link when it's ready.`);
 
   try {
+    const beforeTime = new Date().toISOString();
+
     await octokit.actions.createWorkflowDispatch({
       owner: OWNER,
       repo: REPO,
@@ -77,16 +87,32 @@ app.event("app_mention", async ({ event, say }) => {
       inputs: {
         concept,
         section,
-        slack_channel: event.channel,
-        slack_thread_ts: event.ts,
+        slack_channel: command.channel_id,
+        slack_thread_ts: "",
       },
     });
+
+    // Poll for the newly created run (dispatch API doesn't return run ID)
+    let runUrl = `https://github.com/${OWNER}/${REPO}/actions`;
+    for (let i = 0; i < 5; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const { data } = await octokit.actions.listWorkflowRuns({
+        owner: OWNER,
+        repo: REPO,
+        workflow_id: WORKFLOW_FILE,
+        created: `>=${beforeTime}`,
+        per_page: 1,
+      });
+      if (data.workflow_runs.length > 0) {
+        runUrl = data.workflow_runs[0].html_url;
+        break;
+      }
+    }
+
+    await respond(`Workflow started: ${runUrl}`);
   } catch (err) {
     console.error("Failed to trigger workflow:", err.message);
-    await say({
-      text: `Failed to trigger doc generation: ${err.message}`,
-      thread_ts: event.ts,
-    });
+    await respond(`Failed to trigger doc generation: ${err.message}`);
   }
 });
 

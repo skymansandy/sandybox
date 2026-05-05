@@ -7,17 +7,19 @@ features:
   bot_user:
     display_name: SandyBot
     always_online: true
+  slash_commands:
+    - command: /sandybox
+      description: Generate a knowledge base doc
+      usage_hint: "<concept> [in <section>]"
+      should_escape: false
 
 oauth_config:
   scopes:
     bot:
-      - app_mentions:read
       - chat:write
+      - commands
 
 settings:
-  event_subscriptions:
-    bot_events:
-      - app_mention
   interactivity:
     is_enabled: false
   org_deploy_enabled: false

@@ -101,28 +101,31 @@ jobs:
       - name: Notify Slack on success
         if: success()
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
-          PAYLOAD=$(cat <<EOF
+          curl -s -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-type: application/json" \
+            --data "$(cat <<EOF
           {
             "channel": "${{ github.event.inputs.slack_channel }}",
-            "thread_ts": "${{ github.event.inputs.slack_thread_ts }}",
             "text": "Doc generated for *${{ github.event.inputs.concept }}*! :page_facing_up:\nPath: \`${{ steps.page.outputs.file }}\`"
           }
           EOF
-          )
-          curl -s -X POST -H 'Content-type: application/json' --data "$PAYLOAD" "$SLACK_WEBHOOK_URL"
+          )"
 
       - name: Notify Slack on failure
         if: failure()
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
-          PAYLOAD=$(cat <<EOF
+          curl -s -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-type: application/json" \
+            --data "$(cat <<EOF
           {
             "channel": "${{ github.event.inputs.slack_channel }}",
             "text": "Failed to generate doc for *${{ github.event.inputs.concept }}*. Check the <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|workflow run> for details."
           }
           EOF
-          )
-          curl -s -X POST -H 'Content-type: application/json' --data "$PAYLOAD" "$SLACK_WEBHOOK_URL"
+          )"
