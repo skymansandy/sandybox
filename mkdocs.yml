@@ -115,6 +115,7 @@ nav:
         - Unit Testing: mobile/android/miscellaneous/unit-testing.md
         - App Startup: mobile/android/miscellaneous/app-startup.md
         - Pagination: mobile/android/miscellaneous/pagination.md
+        - AndroidX Paging3: mobile/android/miscellaneous/paging3.md
         - Product Metrics: mobile/android/miscellaneous/product-metrics.md
         - Deep Links & Attribution: mobile/android/miscellaneous/deep-links-attribution.md
     - iOS:
