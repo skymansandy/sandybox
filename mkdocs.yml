@@ -123,6 +123,12 @@ nav:
       - iOS App Lifecycle: mobile/ios/app-lifecycle.md
     - Cross-Platform:
       - mobile/cross-platform/index.md
+      - Kotlin Multiplatform:
+        - mobile/cross-platform/kmp/index.md
+        - Compose Multiplatform: mobile/cross-platform/kmp/compose-multiplatform.md
+        - iOS Integration: mobile/cross-platform/kmp/ios-integration.md
+        - Shared Architecture: mobile/cross-platform/kmp/shared-architecture.md
+        - Migration & Adoption: mobile/cross-platform/kmp/migration-adoption.md
 
   - Programming:
     - programming/index.md
