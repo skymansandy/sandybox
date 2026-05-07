@@ -206,6 +206,25 @@ nav:
       - Reactions & Equations: science/chemistry/reactions-and-equations.md
       - States of Matter: science/chemistry/states-of-matter.md
 
+  - System Design:
+    - system-design/index.md
+    - Generic:
+      - system-design/generic/index.md
+      - Chat Application:
+        - system-design/generic/chat-app/index.md
+        - Requirements & Estimation: system-design/generic/chat-app/requirements-estimation.md
+        - High-Level Architecture: system-design/generic/chat-app/high-level-architecture.md
+        - Real-Time Messaging: system-design/generic/chat-app/real-time-messaging.md
+        - Data Model & Storage: system-design/generic/chat-app/data-model-storage.md
+        - Scalability & Reliability: system-design/generic/chat-app/scalability-reliability.md
+    - Mobile:
+      - system-design/mobile/index.md
+      - Chat Application:
+        - system-design/mobile/chat-app/index.md
+        - Mobile Architecture: system-design/mobile/chat-app/mobile-architecture.md
+        - Offline Support & Sync: system-design/mobile/chat-app/offline-sync.md
+        - Push Notifications & Background: system-design/mobile/chat-app/push-notifications.md
+
   - Tools:
     - tools/index.md
 
