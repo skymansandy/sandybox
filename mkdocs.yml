@@ -217,6 +217,13 @@ nav:
         - Real-Time Messaging: system-design/generic/chat-app/real-time-messaging.md
         - Data Model & Storage: system-design/generic/chat-app/data-model-storage.md
         - Scalability & Reliability: system-design/generic/chat-app/scalability-reliability.md
+      - News Feed:
+        - system-design/generic/news-feed/index.md
+        - Requirements & Estimation: system-design/generic/news-feed/requirements-estimation.md
+        - High-Level Architecture: system-design/generic/news-feed/high-level-architecture.md
+        - Feed Generation & Ranking: system-design/generic/news-feed/feed-generation-ranking.md
+        - Data Model & Storage: system-design/generic/news-feed/data-model-storage.md
+        - Scalability & Reliability: system-design/generic/news-feed/scalability-reliability.md
     - Mobile:
       - system-design/mobile/index.md
       - Chat Application:
