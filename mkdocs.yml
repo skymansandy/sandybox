@@ -160,6 +160,7 @@ nav:
     - infra/index.md
     - Networking:
       - infra/networking/index.md
+      - WebSockets & SSE: infra/networking/websockets-sse.md
     - DevOps:
       - infra/devops/index.md
       - Docker:
