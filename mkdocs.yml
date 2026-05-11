@@ -161,6 +161,8 @@ nav:
     - Networking:
       - infra/networking/index.md
       - WebSockets & SSE: infra/networking/websockets-sse.md
+      - WebSockets: infra/networking/websockets.md
+      - Server-Sent Events: infra/networking/sse.md
     - DevOps:
       - infra/devops/index.md
       - Docker:
