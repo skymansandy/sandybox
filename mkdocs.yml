@@ -124,6 +124,12 @@ nav:
       - mobile/ios/index.md
       - Swift Essentials: mobile/ios/swift-essentials.md
       - iOS App Lifecycle: mobile/ios/app-lifecycle.md
+    - Device Connectivity:
+      - mobile/device-connectivity/index.md
+      - Bluetooth Classic & BLE: mobile/device-connectivity/bluetooth.md
+      - Wi-Fi Direct: mobile/device-connectivity/wifi-direct.md
+      - NFC: mobile/device-connectivity/nfc.md
+      - Nearby Connectivity APIs: mobile/device-connectivity/nearby-apis.md
     - Cross-Platform:
       - mobile/cross-platform/index.md
       - Kotlin Multiplatform:
