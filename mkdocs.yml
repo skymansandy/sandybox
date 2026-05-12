@@ -149,6 +149,9 @@ nav:
         - Flow: programming/languages/kotlin/flow.md
         - KSP: programming/languages/kotlin/ksp.md
         - KMP: programming/languages/kotlin/kmp.md
+        - C Programming: programming/languages/kotlin/c-programming.md
+        - JNI: programming/languages/kotlin/jni.md
+        - Android NDK: programming/languages/kotlin/android-ndk.md
     - Data Formats:
       - programming/data-formats/index.md
       - JSON & YAML: programming/data-formats/json-yaml.md
