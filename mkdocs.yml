@@ -189,6 +189,12 @@ nav:
         - Continuous Integration: infra/devops/ci-cd/continuous-integration.md
         - Continuous Delivery & Deployment: infra/devops/ci-cd/continuous-delivery.md
         - Pipeline Design Patterns: infra/devops/ci-cd/pipeline-design.md
+    - Browsers:
+      - infra/browsers/index.md
+      - Chromium Architecture: infra/browsers/chromium-architecture.md
+      - Rendering Pipeline: infra/browsers/rendering-pipeline.md
+      - V8 Engine: infra/browsers/v8-engine.md
+      - WebView: infra/browsers/webview.md
     - Databases:
       - infra/databases/index.md
       - SQL vs NoSQL: infra/databases/sql-vs-nosql.md
