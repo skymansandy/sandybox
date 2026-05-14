@@ -147,6 +147,7 @@ nav:
         - Language Essentials: programming/languages/kotlin/essentials.md
         - Coroutines: programming/languages/kotlin/coroutines.md
         - Flow: programming/languages/kotlin/flow.md
+        - Flow Deep Dive: programming/languages/kotlin/flow-deep-dive.md
         - KSP: programming/languages/kotlin/ksp.md
         - KMP: programming/languages/kotlin/kmp.md
         - C Programming: programming/languages/kotlin/c-programming.md
