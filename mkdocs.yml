@@ -110,6 +110,8 @@ nav:
         - Build Variants: mobile/android/build-system/build-variants.md
         - Dependency Management: mobile/android/build-system/dependency-management.md
         - Build Performance: mobile/android/build-system/build-performance.md
+      - Graphics:
+        - WebGPU: mobile/android/graphics/webgpu.md
       - Security:
         - Root Detection: mobile/android/security/root-detection.md
       - Miscellaneous:
