@@ -71,6 +71,7 @@ nav:
         - RecyclerView: mobile/android/ui/recyclerview.md
       - Networking:
         - Networking: mobile/android/networking/networking.md
+        - Connection Pooling: mobile/android/networking/connection-pooling.md
         - SSL Pinning: mobile/android/networking/ssl-pinning.md
       - Data & Storage:
         - Storage: mobile/android/data-storage/storage.md
