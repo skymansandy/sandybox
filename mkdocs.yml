@@ -68,6 +68,7 @@ nav:
         - Compose Side Effects: mobile/android/ui/compose-side-effects.md
         - Compose Performance: mobile/android/ui/compose-performance.md
         - Compose Testing: mobile/android/ui/compose-testing.md
+        - Common Compose Snippets: mobile/android/ui/common-compose-snippets.md
         - RecyclerView: mobile/android/ui/recyclerview.md
       - Networking:
         - Networking: mobile/android/networking/networking.md
@@ -162,6 +163,7 @@ nav:
         - C Programming: programming/languages/kotlin/c-programming.md
         - JNI: programming/languages/kotlin/jni.md
         - Android NDK: programming/languages/kotlin/android-ndk.md
+        - Common Snippets: programming/languages/kotlin/common-snippets.md
     - Data Formats:
       - programming/data-formats/index.md
       - JSON & YAML: programming/data-formats/json-yaml.md
