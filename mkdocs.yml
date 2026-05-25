@@ -186,6 +186,8 @@ nav:
         - HTTP/1.x: infra/networking/http-versions/http1.md
         - HTTP/2: infra/networking/http-versions/http2.md
         - HTTP/3: infra/networking/http-versions/http3.md
+      - TCP Internals: infra/networking/tcp-internals.md
+      - HTTP on Mobile: infra/networking/http-on-mobile.md
       - WebSockets & SSE: infra/networking/websockets-sse.md
       - WebSockets: infra/networking/websockets.md
       - Server-Sent Events: infra/networking/sse.md
