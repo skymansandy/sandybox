@@ -125,6 +125,7 @@ nav:
         - WebGPU: mobile/android/graphics/webgpu.md
       - Security:
         - Root Detection: mobile/android/security/root-detection.md
+        - Network Security Config: mobile/android/security/network-security-config.md
       - Miscellaneous:
         - Android Essentials: mobile/android/miscellaneous/android-essentials.md
         - Unit Testing: mobile/android/miscellaneous/unit-testing.md
