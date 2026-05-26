@@ -50,6 +50,7 @@ nav:
       - mobile/android/index.md
       - Core Platform:
         - Architecture & Runtime: mobile/android/core-platform/architecture.md
+        - ART Compilation — AOT vs JIT vs Interpreter: mobile/android/core-platform/art-compilation.md
         - Zygote & App Startup Internals: mobile/android/core-platform/zygote-app-startup.md
         - Activity, Fragment & Lifecycle: mobile/android/core-platform/app-components.md
         - Views & UI Components: mobile/android/core-platform/views.md
