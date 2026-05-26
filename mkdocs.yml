@@ -142,6 +142,7 @@ nav:
     - Device Connectivity:
       - mobile/device-connectivity/index.md
       - Bluetooth Classic & BLE: mobile/device-connectivity/bluetooth.md
+      - Wi-Fi Scanning & Fast Connection: mobile/device-connectivity/wifi-scanning.md
       - Wi-Fi Direct: mobile/device-connectivity/wifi-direct.md
       - NFC: mobile/device-connectivity/nfc.md
       - Nearby Connectivity APIs: mobile/device-connectivity/nearby-apis.md

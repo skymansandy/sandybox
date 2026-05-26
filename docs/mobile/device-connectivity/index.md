@@ -50,6 +50,7 @@ flowchart TD
 | Page | What It Covers |
 |---|---|
 | [Bluetooth Classic & BLE](bluetooth.md) | Bluetooth stack, profiles, pairing, GATT, scanning, and data transfer on Android & iOS |
+| [Wi-Fi Scanning & Fast Connection](wifi-scanning.md) | How mobile devices discover and reconnect to Wi-Fi networks almost instantly — PNO, scanning modes, and 802.11 fast reconnection |
 | [Wi-Fi Direct](wifi-direct.md) | Peer-to-peer Wi-Fi, group formation, service discovery, and high-bandwidth transfer |
 | [NFC](nfc.md) | Near Field Communication, NDEF records, tag types, reader/writer modes, and Host Card Emulation |
 | [Nearby Connectivity APIs](nearby-apis.md) | Google Nearby Connections, Apple Multipeer Connectivity, and cross-platform abstractions |
