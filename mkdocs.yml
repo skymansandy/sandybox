@@ -88,6 +88,7 @@ nav:
         - Memory Management: mobile/android/performance/memory-management.md
         - APK Optimization: mobile/android/performance/apk-optimization.md
         - Bitmap Pool: mobile/android/performance/bitmap-pool.md
+        - Doze Mode & App Standby: mobile/android/performance/doze-app-standby.md
       - System Services:
         - Services: mobile/android/system-services/services.md
         - Broadcast Receivers: mobile/android/system-services/broadcast-receivers.md
