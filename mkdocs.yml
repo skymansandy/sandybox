@@ -53,6 +53,7 @@ nav:
         - ART Compilation — AOT vs JIT vs Interpreter: mobile/android/core-platform/art-compilation.md
         - Zygote & App Startup Internals: mobile/android/core-platform/zygote-app-startup.md
         - Activity, Fragment & Lifecycle: mobile/android/core-platform/app-components.md
+        - System Updates — A/B Seamless Updates: mobile/android/core-platform/system-updates.md
         - Views & UI Components: mobile/android/core-platform/views.md
       - Concurrency:
         - Multithreading: mobile/android/concurrency/multithreading.md
