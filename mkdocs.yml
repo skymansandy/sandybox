@@ -114,6 +114,8 @@ nav:
       - Build System:
         - Gradle & Build System: mobile/android/build-system/index.md
         - Gradle Fundamentals: mobile/android/build-system/gradle-fundamentals.md
+        - Android Gradle Plugin (AGP): mobile/android/build-system/agp.md
+        - Gradle Wrapper: mobile/android/build-system/gradle-wrapper.md
         - Build Variants: mobile/android/build-system/build-variants.md
         - Dependency Management: mobile/android/build-system/dependency-management.md
         - Build Performance: mobile/android/build-system/build-performance.md

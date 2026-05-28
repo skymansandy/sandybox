@@ -8,7 +8,9 @@ Gradle is the build automation tool for Android projects. It handles compilation
 
 | Topic | What It Covers |
 |-------|---------------|
-| [Gradle Fundamentals](gradle-fundamentals.md) | Build lifecycle, project structure, Groovy vs KTS, Gradle wrapper, settings and build files |
+| [Gradle Fundamentals](gradle-fundamentals.md) | Build lifecycle, project structure, Groovy vs KTS, settings and build files |
+| [Android Gradle Plugin (AGP)](agp.md) | AGP vs Gradle, version compatibility matrix, android DSL, variant API, upgrading, convention plugins |
+| [Gradle Wrapper](gradle-wrapper.md) | Wrapper mechanics, distribution types, security hardening, CI caching, troubleshooting |
 | [Build Variants](build-variants.md) | Build types, product flavors, variant matrix, signing configs, variant-aware dependencies |
 | [Dependency Management](dependency-management.md) | Dependency configurations, version catalogs, BOMs, resolution strategies, dependency locking |
 | [Build Performance](build-performance.md) | Build cache, configuration cache, parallel execution, profiling, and optimization techniques |
