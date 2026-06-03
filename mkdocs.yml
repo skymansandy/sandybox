@@ -227,6 +227,7 @@ nav:
       - Rendering Pipeline: infra/browsers/rendering-pipeline.md
       - V8 Engine: infra/browsers/v8-engine.md
       - WebView: infra/browsers/webview.md
+      - Ad Blockers: infra/browsers/ad-blockers.md
     - Databases:
       - infra/databases/index.md
       - SQL vs NoSQL: infra/databases/sql-vs-nosql.md
