@@ -126,6 +126,10 @@ nav:
         - Messaging Apps: mobile/android/android-auto/messaging-apps.md
         - Cars App Library: mobile/android/android-auto/cars-app-library.md
         - Testing & Tools: mobile/android/android-auto/testing.md
+      - Debugging:
+        - Android Debugging: mobile/android/debugging/index.md
+        - ADB — Android Debug Bridge: mobile/android/debugging/adb.md
+        - Debugger Internals: mobile/android/debugging/debugger-internals.md
       - Graphics:
         - WebGPU: mobile/android/graphics/webgpu.md
       - Security:
