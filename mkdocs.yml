@@ -60,6 +60,7 @@ nav:
         - Main Thread: mobile/android/concurrency/main-thread.md
         - Coroutine Internals: mobile/android/concurrency/coroutine-internals.md
         - Flow & Channel Best Practices: mobile/android/concurrency/flow-channel-best-practices.md
+        - Backpressure in Kotlin Flow: mobile/android/concurrency/backpressure.md
       - Architecture & Patterns:
         - Design Patterns: mobile/android/architecture-patterns/design-patterns.md
         - SOLID Principles: mobile/android/architecture-patterns/solid-principles.md
@@ -77,6 +78,7 @@ nav:
         - Networking: mobile/android/networking/networking.md
         - Connection Pooling: mobile/android/networking/connection-pooling.md
         - SSL Pinning: mobile/android/networking/ssl-pinning.md
+        - SSE on Android: mobile/android/networking/sse-android.md
       - Data & Storage:
         - Storage: mobile/android/data-storage/storage.md
         - Serialization: mobile/android/data-storage/serialization.md
