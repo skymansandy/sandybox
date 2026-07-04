@@ -179,6 +179,7 @@ nav:
         - C Programming: programming/languages/kotlin/c-programming.md
         - JNI: programming/languages/kotlin/jni.md
         - Android NDK: programming/languages/kotlin/android-ndk.md
+        - Konan — Kotlin/Native Compiler: programming/languages/kotlin/konan.md
         - Common Snippets: programming/languages/kotlin/common-snippets.md
     - Data Formats:
       - programming/data-formats/index.md
